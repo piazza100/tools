@@ -1,7 +1,5 @@
-.git
-.idea
-.m2
-.env.local
-.env.production
-frontend
-target
+# Only backend build inputs are sent to the Docker builder.
+**
+!pom.xml
+!src
+!src/**

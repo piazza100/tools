@@ -34,20 +34,22 @@
 
 ### 1. Render backend
 
-- 저장소의 `render.yaml` Blueprint를 사용하거나 Docker Web Service로 생성합니다.
+- PixelLife와 동일하게 저장소 루트의 `Dockerfile`을 사용하는 Docker Web Service로 생성합니다.
+- Render에서 New Web Service를 만들고 Runtime은 Docker, Dockerfile path는 `./Dockerfile`로 지정합니다.
 - Health check path: `/actuator/health`
 - `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`은 Render Secret 환경변수로 등록합니다.
-- `FRONTEND_ORIGIN`과 `FRONTEND_URL`에는 Cloudflare Pages의 실제 HTTPS 도메인을 입력합니다.
+- `FRONTEND_ORIGIN`과 `FRONTEND_URL`에는 Cloudflare Worker의 실제 HTTPS 도메인을 입력합니다.
 - `GOOGLE_REDIRECT_URI`에는 `https://실제프런트도메인/login/oauth2/code/google`을 입력합니다.
 
-### 2. Cloudflare Pages frontend
+### 2. Cloudflare Workers Static Assets frontend
 
-- Git 저장소를 연결하고 Root directory를 `frontend`로 지정합니다.
+- Worker `tools`에 Git 저장소를 연결하고 Build configuration의 Root directory를 `frontend`로 지정합니다.
 - Build command: `pnpm build`
-- Build output directory: `dist`
-- Production 환경변수 `API_ORIGIN=https://wonderlife-api.onrender.com`을 등록합니다. 실제 Render 주소로 교체합니다.
+- Deploy command: `pnpm exec wrangler deploy`
+- Worker의 Variables and Secrets에 `API_ORIGIN=https://wonderlife-api.onrender.com`을 Text 변수로 등록합니다. 실제 Render 주소로 교체합니다.
 - AdSense 승인 후 `VITE_GOOGLE_ADSENSE_CLIENT=ca-pub-...`도 등록합니다.
-- `frontend/functions/[[path]].ts`가 API와 OAuth 요청을 같은 도메인에서 Render로 프록시합니다.
+- `frontend/wrangler.jsonc`가 빌드 결과물인 `frontend/dist`만 정적 자산으로 배포합니다.
+- `frontend/worker/index.ts`가 API와 OAuth 요청을 같은 도메인에서 Render로 프록시합니다.
 
 ### 3. Google OAuth
 

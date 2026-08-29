@@ -1,12 +1,15 @@
-FROM maven:3.9.11-eclipse-temurin-17 AS build
+FROM maven:3.9.11-eclipse-temurin-17-alpine AS build
 WORKDIR /workspace
-COPY pom.xml .
+COPY pom.xml ./
 RUN mvn -B -DskipTests dependency:go-offline
 COPY src ./src
 RUN mvn -B -DskipTests package
 
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre-alpine
+RUN addgroup -S wonderlife && adduser -S wonderlife -G wonderlife
 WORKDIR /app
-COPY --from=build /workspace/target/wonderlife-api-0.1.0.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+COPY --from=build /workspace/target/*.jar app.jar
+USER wonderlife
+EXPOSE 10000
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:+UseSerialGC"
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /app/app.jar"]
