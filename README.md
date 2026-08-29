@@ -45,7 +45,7 @@
 
 - Worker `tools`에 Git 저장소를 연결하고 Build configuration의 Root directory를 `frontend`로 지정합니다.
 - Build command: `pnpm build`
-- Deploy command: `pnpm exec wrangler deploy`
+- Deploy command: `pnpm deploy` (`deploy` 스크립트가 프로덕션 빌드 후 Wrangler 배포까지 수행합니다.)
 - Worker의 Variables and Secrets에 `API_ORIGIN=https://wonderlife-api.onrender.com`을 Text 변수로 등록합니다. 실제 Render 주소로 교체합니다.
 - AdSense 승인 후 `VITE_GOOGLE_ADSENSE_CLIENT=ca-pub-...`도 등록합니다.
 - `frontend/wrangler.jsonc`가 빌드 결과물인 `frontend/dist`만 정적 자산으로 배포합니다.
