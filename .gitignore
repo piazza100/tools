@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+!.env.production.example
+target/
+frontend/node_modules/
+node_modules/
+.m2/
+frontend/dist/
+frontend/*.tsbuildinfo
+.idea/
+.vscode/
+.codex/
+.agents/
+*.log
