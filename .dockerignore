@@ -1,0 +1,7 @@
+.git
+.idea
+.m2
+.env.local
+.env.production
+frontend
+target
