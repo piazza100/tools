@@ -11,12 +11,12 @@ class MemoryStorage{
 const entry=(type:string,index:number)=>({calculatorType:type,title:`계산 ${index}`,inputJson:'{}',resultJson:JSON.stringify({main:String(index)})})
 
 describe('anonymous calculation history',()=>{
- it('keeps the latest ten entries per calculator',()=>{
+ it('keeps the latest five entries per calculator',()=>{
   const storage=new MemoryStorage()
   for(let i=0;i<12;i++)addLocalHistory(entry('loan',i),storage)
   for(let i=0;i<3;i++)addLocalHistory(entry('date',i),storage)
   const histories=loadLocalHistories(storage)
-  expect(histories.filter(x=>x.calculatorType==='loan')).toHaveLength(10)
+  expect(histories.filter(x=>x.calculatorType==='loan')).toHaveLength(5)
   expect(histories.filter(x=>x.calculatorType==='date')).toHaveLength(3)
   expect(histories.find(x=>x.calculatorType==='loan')?.title).toBe('계산 11')
  })

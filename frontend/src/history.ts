@@ -10,7 +10,9 @@ export function loadLocalHistories(target=storage()):LocalHistory[]{
  if(!target)return []
  try{
   const value=JSON.parse(target.getItem(KEY)||'[]')
-  return Array.isArray(value)?value.filter((item):item is LocalHistory=>Boolean(item&&typeof item.id==='string'&&typeof item.calculatorType==='string')):[]
+  if(!Array.isArray(value))return []
+  const counts=new Map<string,number>()
+  return value.filter((item):item is LocalHistory=>Boolean(item&&typeof item.id==='string'&&typeof item.calculatorType==='string')).filter(item=>{const count=(counts.get(item.calculatorType)||0)+1;counts.set(item.calculatorType,count);return count<=5})
  }catch{return []}
 }
 
@@ -20,7 +22,7 @@ export function addLocalHistory(entry:Omit<LocalHistory,'id'|'createdAt'>,target
  const histories=[next,...loadLocalHistories(target)].filter(item=>{
   const value=(count.get(item.calculatorType)||0)+1
   count.set(item.calculatorType,value)
-  return value<=10
+  return value<=5
  })
  target?.setItem(KEY,JSON.stringify(histories))
  return histories
