@@ -1,4 +1,4 @@
-import {useEffect,useMemo,useState,type MouseEvent,type ReactNode} from 'react'
+import {useEffect,useMemo,useRef,useState,type MouseEvent,type ReactNode} from 'react'
 import {addDays,businessDays2026,dateAtNoon,diffDays,fullAge,holidays2026,loan,LoanMethod,minimumWages,num,partTimePay,pensionCaps,salaryEstimate,salaryRateInfo,savingsInterest,socialInsurance,splitExpense,vat,won} from './calculations'
 import {guides} from './guides'
 import {api,History,Member,type SaveHistory} from './api'
@@ -26,6 +26,16 @@ function Field({label,value,onChange,type='number',step,children}:{label:string,
  return <label className="field"><span>{label}</span>{children||<input type={numeric?'text':type} inputMode={numeric?'decimal':undefined} step={step} value={numeric?groupedNumber(value??''):value} onChange={e=>onChange?.(numeric?groupedNumber(e.target.value):e.target.value)}/>}</label>
 }
 function Select({label,value,onChange,options}:{label:string,value:string,onChange:(v:string)=>void,options:[string,string][]}){const visibleOptions=label==='적용 연도'?[...options,['2022','2022'],['2021','2021'],['2020','2020']] as [string,string][]:options;return <Field label={label}><select value={value} onChange={e=>onChange(e.target.value)}>{visibleOptions.map(([v,l])=><option value={v} key={v}>{l}</option>)}</select></Field>}
+function DateField({label,value,onChange,minYear=1900,maxYear=new Date().getFullYear()+30}:{label:string,value:string,onChange:(v:string)=>void,minYear?:number,maxYear?:number}){
+ const parse=(date:string)=>/^\d{4}-\d{2}-\d{2}$/.test(date)?date.split('-'):['','','']
+ const initial=parse(value),[year,setYear]=useState(initial[0]),[month,setMonth]=useState(initial[1]),[day,setDay]=useState(initial[2])
+ const previousLabel=useRef(label)
+ useEffect(()=>{const next=parse(value),labelChanged=previousLabel.current!==label;if(value){setYear(next[0]);setMonth(next[1]);setDay(next[2])}else if(labelChanged){setYear('');setMonth('');setDay('')}previousLabel.current=label},[value,label])
+ const days=year&&month?new Date(Number(year),Number(month),0).getDate():31
+ const update=(part:'year'|'month'|'day',nextValue:string)=>{let y=year,m=month,d=day;if(part==='year'){y=nextValue;setYear(y)}else if(part==='month'){m=nextValue;setMonth(m);if(d&&Number(d)>new Date(Number(y||2026),Number(m),0).getDate()){d='';setDay('')}}else{d=nextValue;setDay(d)}onChange(y&&m&&d?`${y}-${m}-${d}`:'')}
+ const years=Array.from({length:maxYear-minYear+1},(_,i)=>String(maxYear-i))
+ return <label className="field date-field"><span>{label}</span><span className="date-parts"><select aria-label={`${label} 연도`} value={year} onChange={e=>update('year',e.target.value)}><option value="">연도</option>{years.map(y=><option key={y} value={y}>{y}년</option>)}</select><select aria-label={`${label} 월`} value={month} onChange={e=>update('month',e.target.value)}><option value="">월</option>{Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0')).map(m=><option key={m} value={m}>{Number(m)}월</option>)}</select><select aria-label={`${label} 일`} value={day} onChange={e=>update('day',e.target.value)}><option value="">일</option>{Array.from({length:days},(_,i)=>String(i+1).padStart(2,'0')).map(d=><option key={d} value={d}>{Number(d)}일</option>)}</select></span></label>
+}
 function Result({main,lines=[],note}:{main:string,lines?:[string,string][],note?:string}){return <section className="result" aria-live="polite"><small>계산 결과</small><strong>{main}</strong>{lines.map(([a,b])=><div className="result-row" key={a}><span>{a}</span><b>{b}</b></div>)}{note&&<p>{note}</p>}</section>}
 
 function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,input:unknown,result:unknown)=>void}){
@@ -81,10 +91,10 @@ function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,inpu
   else if(id==='salary'){const [year,dep,nonTax]=(mode||'2026|1|200000').split('|').map(Number);const x=salaryEstimate(n(a),year,nonTax,dep);done({main:`월 예상 ${won(x.net)}`,lines:[['세전 월급',won(x.gross)],['국민연금',won(x.pension)],['건강보험',won(x.health)],['장기요양',won(x.care)],['고용보험',won(x.employment)],['소득세',won(x.income)],['지방소득세',won(x.local)],['공제 합계',won(x.total)]],note:'간이 추정치입니다. 실제 원천징수액은 부양가족, 비과세 항목, 회사 처리 및 연말정산에 따라 달라집니다.',raw:x})}
  }
  const inputs=()=>{switch(id){
-  case'date':return <><Field label="시작일" type="date" value={a} onChange={setA}/><Field label="종료일" type="date" value={b} onChange={setB}/></>
-  case'business':return <><Field label="시작일 (2026년)" type="date" value={a} onChange={setA}/><Field label="종료일 (2026년)" type="date" value={b} onChange={setB}/><Select label="시작일 처리" value={mode||'include'} onChange={setMode} options={[["include","시작일 포함"],["exclude","시작일 제외"]]}/></>
-  case'age':return <><Field label="생년월일" type="date" value={a} onChange={setA}/><Field label="기준일" type="date" value={b||today} onChange={setB}/></>
-  case'dday':return <Field label="목표일" type="date" value={a} onChange={setA}/>
+  case'date':return <><DateField label="시작일" value={a} onChange={setA}/><DateField label="종료일" value={b} onChange={setB}/></>
+  case'business':return <><DateField label="시작일 (2026년)" value={a} onChange={setA} minYear={2026} maxYear={2026}/><DateField label="종료일 (2026년)" value={b} onChange={setB} minYear={2026} maxYear={2026}/><Select label="시작일 처리" value={mode||'include'} onChange={setMode} options={[["include","시작일 포함"],["exclude","시작일 제외"]]}/></>
+  case'age':return <><DateField label="생년월일" value={a} onChange={setA} maxYear={new Date().getFullYear()}/><DateField label="기준일" value={b||today} onChange={setB}/></>
+  case'dday':return <DateField label="목표일" value={a} onChange={setA}/>
   case'percent':return <><Select label="계산 방식" value={mode||'change'} onChange={setMode} options={[["change","증감률"],["discount","할인 가격"]]}/><Field label={mode==='discount'?'원래 가격':'기준값'} value={a} onChange={setA}/><Field label={mode==='discount'?'할인율(%)':'변경값'} value={b} onChange={setB}/></>
   case'vat':return <><Select label="입력 금액 기준" value={mode||'supply'} onChange={setMode} options={[["supply","공급가액 입력"],["total","합계금액 입력"]]}/><Field label={mode==='total'?'부가세 포함 합계금액':'공급가액'} value={a} onChange={setA}/></>
   case'unit':return <><Select label="변환" value={mode||'pyeong'} onChange={setMode} options={[["pyeong","평 → ㎡"],["meter","m → cm"],["km","km → m"],["kg","kg → g"],["lb","lb → kg"]]}/><Field label="값" value={a} onChange={setA}/></>
@@ -99,7 +109,7 @@ function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,inpu
   case'parttime':return <><Field label="시급" value={a} onChange={setA}/><Field label="하루 근무시간" value={b} onChange={setB}/><Field label="주 근무일수" value={c} onChange={setC}/></>
   case'insurance':return <><Field label="월 총급여" value={a} onChange={setA}/><Field label="월 비과세 급여" value={b} onChange={setB}/><Select label="적용 연도" value={mode||'2026'} onChange={setMode} options={[["2026","2026"],["2025","2025"],["2024","2024"],["2023","2023"]]}/></>
   case'study':return <><Field label="전체 분량" value={a} onChange={setA}/><Field label="완료 분량" value={b} onChange={setB}/><Field label="남은 일수" value={c} onChange={setC}/><Select label="단위" value={mode||'쪽'} onChange={setMode} options={[["쪽","쪽"],["분","분"],["강","강"]]}/></>
-  case'schedule':return <><Field label="첫 일정" type="date" value={a} onChange={setA}/><Field label="횟수" value={b} onChange={setB}/><Field label="간격 (일)" value={c} onChange={setC}/></>
+  case'schedule':return <><DateField label="첫 일정" value={a} onChange={setA}/><Field label="횟수" value={b} onChange={setB}/><Field label="간격 (일)" value={c} onChange={setC}/></>
   case'loan':return <><Field label="대출 원금" value={a} onChange={setA}/><Field label="연 이자율 (%)" step="0.01" value={b} onChange={setB}/><Field label="기간 (개월)" value={c} onChange={setC}/><Select label="상환 방식" value={mode||'annuity'} onChange={setMode} options={[["annuity","원리금균등"],["principal","원금균등"],["bullet","만기일시"]]}/></>
   case'salary':return <><Field label="연봉 (세전)" value={a} onChange={setA}/><Select label="조건" value={mode||'2026|1|200000'} onChange={setMode} options={[["2026|1|200000","2026 · 본인 1명 · 비과세 20만원"],["2025|1|200000","2025 · 본인 1명 · 비과세 20만원"],["2026|2|200000","2026 · 부양가족 2명 · 비과세 20만원"],["2026|1|0","2026 · 본인 1명 · 비과세 없음"]]}/></>
   default:return null}}
