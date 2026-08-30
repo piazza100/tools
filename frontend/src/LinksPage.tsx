@@ -5,7 +5,7 @@ import TopButton from './TopButton'
 export default function LinksPage(){
  const [query,setQuery]=useState(''),[category,setCategory]=useState('전체')
  const menuRef=useRef<HTMLDetailsElement>(null)
- useEffect(()=>{document.title='생활 사이트 모음 | WonderLife'},[])
+ useEffect(()=>{const title='생활 사이트 모음 | WonderLife',description='공공·금융·교통·취업 등 일상에서 자주 찾는 사이트를 용도와 주의사항별로 확인하세요.';document.title=title;document.querySelector('meta[name="description"]')?.setAttribute('content',description);document.querySelector('meta[property="og:title"]')?.setAttribute('content',title);document.querySelector('meta[property="og:description"]')?.setAttribute('content',description);let canonical=document.querySelector<HTMLLinkElement>('link[rel="canonical"]');if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.appendChild(canonical)}canonical.href=window.location.origin+'/links'},[])
  useEffect(()=>{const close=(event:PointerEvent)=>{if(menuRef.current?.open&&!menuRef.current.contains(event.target as Node))menuRef.current.open=false};document.addEventListener('pointerdown',close);return()=>document.removeEventListener('pointerdown',close)},[])
  const visible=useMemo(()=>siteLinks.filter(site=>(category==='전체'||site.category===category)&&`${site.name} ${site.description} ${site.tags.join(' ')}`.toLowerCase().includes(query.trim().toLowerCase())),[query,category])
  const closeMenu=(event:MouseEvent<HTMLElement>)=>{const details=event.currentTarget.closest('details');if(details)details.open=false}
