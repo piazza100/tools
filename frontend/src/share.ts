@@ -6,3 +6,5 @@ export const encodeShare=(payload:Omit<SharedCalculation,'version'>)=>{const enc
 export const decodeShare=(value:string|null):SharedCalculation|null=>{if(!value||value.length>MAX_SHARE_LENGTH)return null;try{const payload=JSON.parse(fromBase64Url(value)) as SharedCalculation;if(payload.version!==1||typeof payload.calculatorType!=='string'||typeof payload.title!=='string'||!payload.input||!payload.result)return null;return payload}catch{return null}}
 export const sharedFromLocation=()=>decodeShare(new URLSearchParams(window.location.hash.slice(1)).get('share'))
 export const shareUrl=(payload:Omit<SharedCalculation,'version'>)=>{const url=new URL(window.location.origin+'/');url.hash=new URLSearchParams({share:encodeShare(payload)}).toString();return url.toString()}
+export const shortShareTokenFromLocation=()=>{const token=new URLSearchParams(window.location.hash.slice(1)).get('s');return token&&/^[A-Za-z0-9_-]{16}$/.test(token)?token:null}
+export const shortShareUrl=(token:string,origin=window.location.origin)=>{const url=new URL(origin+'/');url.hash=`s=${token}`;return url.toString()}

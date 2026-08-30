@@ -1,5 +1,5 @@
 package com.wonderlife.mapper;
-import com.wonderlife.domain.HistoryRow;import org.apache.ibatis.annotations.*;import java.util.List;
+import com.wonderlife.domain.HistoryRow;import com.wonderlife.domain.ShareRow;import org.apache.ibatis.annotations.*;import java.util.List;
 @Mapper public interface WonderLifeMapper{
  @Insert("INSERT INTO tools_users(provider_subject,email,locale) VALUES(#{sub},#{email},#{locale}) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id),email=VALUES(email),locale=VALUES(locale)") @Options(useGeneratedKeys=true,keyProperty="row.id") void upsertUser(@Param("sub")String sub,@Param("email")String email,@Param("locale")String locale,@Param("row")MutableId row);
  @Select("SELECT id,calculator_type,title,input_json,result_json,created_at FROM (SELECT id,calculator_type,title,input_json,result_json,created_at,ROW_NUMBER() OVER(PARTITION BY calculator_type ORDER BY created_at DESC,id DESC) AS history_rank FROM tools_calculation_histories WHERE user_id=#{userId}) ranked WHERE history_rank<=5 ORDER BY created_at DESC,id DESC") List<HistoryRow> histories(long userId);
@@ -8,6 +8,9 @@ import com.wonderlife.domain.HistoryRow;import org.apache.ibatis.annotations.*;i
  @Delete("DELETE FROM tools_calculation_histories WHERE user_id=#{userId} AND id IN (SELECT id FROM (SELECT id,ROW_NUMBER() OVER(PARTITION BY calculator_type ORDER BY created_at DESC,id DESC) AS history_rank FROM tools_calculation_histories WHERE user_id=#{userId}) ranked WHERE history_rank>5)") void pruneHistories(long userId);
  @Select("SELECT id,calculator_type,title,input_json,result_json,created_at FROM tools_calculation_histories WHERE id=#{id} AND user_id=#{userId}") HistoryRow history(long id,long userId);
  @Delete("DELETE FROM tools_calculation_histories WHERE id=#{id} AND user_id=#{userId}") int delete(long id,long userId);
+ @Insert("INSERT INTO tools_calculation_shares(user_id,share_token,calculator_type,title,input_json,result_json) VALUES(#{userId},#{token},#{type},#{title},#{input},#{result})") void insertShare(@Param("userId")long userId,@Param("token")String token,@Param("type")String type,@Param("title")String title,@Param("input")String input,@Param("result")String result);
+ @Select("SELECT share_token,calculator_type,title,input_json,result_json,created_at FROM tools_calculation_shares WHERE share_token=#{token}") ShareRow share(String token);
+ @Delete("DELETE FROM tools_calculation_shares WHERE user_id=#{userId} AND id IN (SELECT id FROM (SELECT id,ROW_NUMBER() OVER(ORDER BY created_at DESC,id DESC) AS share_rank FROM tools_calculation_shares WHERE user_id=#{userId}) ranked WHERE share_rank>50)") void pruneShares(long userId);
  class MutableId{public long id;public long getId(){return id;}public void setId(long id){this.id=id;}}
  record ImportHistory(String calculatorType,String title,String inputJson,String resultJson){}
 }

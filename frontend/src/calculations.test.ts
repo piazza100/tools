@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {businessDays2026,diffDays,fullAge,loan,minimumWages,monthlyWithholding,partTimePay,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat} from './calculations'
+import {businessDays2026,diffDays,fullAge,holidaysByYear,loan,minimumWages,monthlyWithholding,partTimePay,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat} from './calculations'
 describe('exact calculations',()=>{
  it('handles leap day and calendar dates',()=>expect(diffDays('2024-02-28','2024-03-01')).toBe(2))
  it('calculates international age before birthday',()=>expect(fullAge('2000-12-31','2026-08-28')).toBe(25))
@@ -51,6 +51,13 @@ describe('exact calculations',()=>{
   expect(x.business).toBe(1)
   expect(x.weekends).toBe(1)
   expect(x.holidays).toBe(1)
+ })
+ it('includes historical elections, temporary holidays, and substitutes',()=>{
+  expect(Object.keys(holidaysByYear)).toEqual(['2020','2021','2022','2023','2024','2025','2026'])
+  expect(holidaysByYear[2020]).toContainEqual({date:'2020-08-17',name:'임시공휴일'})
+  expect(holidaysByYear[2023]).toContainEqual({date:'2023-10-02',name:'임시공휴일'})
+  expect(holidaysByYear[2024]).toContainEqual({date:'2024-10-01',name:'국군의 날 임시공휴일'})
+  expect(holidaysByYear[2025]).toContainEqual({date:'2025-06-03',name:'제21대 대통령선거'})
  })
  it('uses the same official social-insurance rates as salary estimates',()=>{
   const x=socialInsurance(3000000,200000,2026)
