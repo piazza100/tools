@@ -30,4 +30,16 @@ describe('housing subscription cash-flow plan',()=>{
   expect(housingPlan(base).rows[0].property).toBe(-100)
   expect(housingPlan({...base,includeContractAtStart:false}).rows[0].property).toBe(0)
  })
+ it('uses individually configured interim payment months',()=>{
+  const result=housingPlan({startMonth:'2026-01',moveInMonth:'2027-01',initialCash:1000,monthlySaving:0,additionalFunds:0,depositReturn:0,price:600,optionCost:0,contractRate:0,interimRate:60,interimCount:3,loanInstallments:0,firstInterimMonth:'2026-02',interimInterval:2,interimMonths:['2026-02','2026-07','2026-11'],annualLoanRate:0,balanceRate:0,acquisitionTaxRate:0,incidentalCost:0})
+  expect(result.rows.find(x=>x.month==='2026-04')?.property).toBe(0)
+  expect(result.rows.find(x=>x.month==='2026-07')?.property).toBe(-120)
+  expect(result.rows.find(x=>x.month==='2026-11')?.memo).toContain('3회차')
+ })
+ it('rejects invalid, out-of-range, or reversed interim months',()=>{
+  const base={startMonth:'2026-01',moveInMonth:'2027-01',initialCash:0,monthlySaving:0,additionalFunds:0,depositReturn:0,price:600,optionCost:0,contractRate:0,interimRate:60,interimCount:2,loanInstallments:0,firstInterimMonth:'2026-02',interimInterval:2,annualLoanRate:0,balanceRate:0,acquisitionTaxRate:0,incidentalCost:0}
+  expect(()=>housingPlan({...base,interimMonths:['2026-13','2026-08']})).toThrow('YYYY-MM')
+  expect(()=>housingPlan({...base,interimMonths:['2025-12','2026-08']})).toThrow('계산 시작월부터 입주 예정월 사이')
+  expect(()=>housingPlan({...base,interimMonths:['2026-08','2026-07']})).toThrow('이전 회차보다 뒤')
+ })
 })
