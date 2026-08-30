@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {diffDays,fullAge,loan,minimumWages,monthlyWithholding,salaryEstimate,splitExpense} from './calculations'
+import {businessDays2026,diffDays,fullAge,loan,minimumWages,monthlyWithholding,partTimePay,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat} from './calculations'
 describe('exact calculations',()=>{
  it('handles leap day and calendar dates',()=>expect(diffDays('2024-02-28','2024-03-01')).toBe(2))
  it('calculates international age before birthday',()=>expect(fullAge('2000-12-31','2026-08-28')).toBe(25))
@@ -29,5 +29,32 @@ describe('exact calculations',()=>{
  it('applies the July 2022 employment insurance increase',()=>{
   expect(Math.round(salaryEstimate(24000000,2022,0,1,'first').employment)).toBe(16000)
   expect(Math.round(salaryEstimate(24000000,2022,0,1,'second').employment)).toBe(18000)
+ })
+ it('separates VAT from a tax-inclusive total without losing the total',()=>{
+  const x=vat(110000,'total')
+  expect(Math.round(x.supply)).toBe(100000)
+  expect(Math.round(x.tax)).toBe(10000)
+  expect(Math.round(x.total)).toBe(110000)
+ })
+ it('calculates deposit interest and general withholding tax',()=>{
+  const x=savingsInterest(10000000,3,12,'deposit',false,.154)
+  expect(x.grossInterest).toBe(300000)
+  expect(x.tax).toBe(46200)
+  expect(x.maturity).toBe(10253800)
+ })
+ it('adds weekly holiday allowance only from 15 scheduled hours',()=>{
+  expect(partTimePay(10320,4,3).weeklyHoliday).toBe(0)
+  expect(partTimePay(10320,5,3).weeklyHoliday).toBe(30960)
+ })
+ it('excludes weekends and weekday holidays from 2026 business days',()=>{
+  const x=businessDays2026('2026-03-01','2026-03-03',true)
+  expect(x.business).toBe(1)
+  expect(x.weekends).toBe(1)
+  expect(x.holidays).toBe(1)
+ })
+ it('uses the same official social-insurance rates as salary estimates',()=>{
+  const x=socialInsurance(3000000,200000,2026)
+  expect(Math.round(x.health)).toBe(100660)
+  expect(Math.round(x.care)).toBe(13227)
  })
 })

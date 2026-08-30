@@ -42,3 +42,61 @@ export function salaryEstimate(annual:number,year:number,nonTaxMonthly:number,de
  return{gross,pension,health,care,employment,income,local,total,net:gross-total}
 }
 export function splitExpense(total:number,people:number,weights:number[]){const sum=weights.reduce((a,b)=>a+b,0)||people;return weights.slice(0,people).map(w=>total*w/sum)}
+
+export const holidays2026=[
+ {date:'2026-01-01',name:'신정'},
+ {date:'2026-02-16',name:'설날 연휴'},{date:'2026-02-17',name:'설날'},{date:'2026-02-18',name:'설날 연휴'},
+ {date:'2026-03-01',name:'삼일절'},{date:'2026-03-02',name:'삼일절 대체공휴일'},
+ {date:'2026-05-01',name:'노동절'},{date:'2026-05-05',name:'어린이날'},
+ {date:'2026-05-24',name:'부처님오신날'},{date:'2026-05-25',name:'부처님오신날 대체공휴일'},
+ {date:'2026-06-03',name:'제9회 전국동시지방선거'},{date:'2026-06-06',name:'현충일'},
+ {date:'2026-07-17',name:'제헌절'},{date:'2026-08-15',name:'광복절'},{date:'2026-08-17',name:'광복절 대체공휴일'},
+ {date:'2026-09-24',name:'추석 연휴'},{date:'2026-09-25',name:'추석'},{date:'2026-09-26',name:'추석 연휴'},
+ {date:'2026-10-03',name:'개천절'},{date:'2026-10-05',name:'개천절 대체공휴일'},{date:'2026-10-09',name:'한글날'},
+ {date:'2026-12-25',name:'기독탄신일'}
+]
+
+export function businessDays2026(start:string,end:string,includeStart=true){
+ const holidaySet=new Set(holidays2026.map(x=>x.date));const direction=diffDays(start,end)>=0?1:-1
+ let cursor=dateAtNoon(start),business=0,weekends=0,holidays=0,total=0
+ if(!includeStart)cursor.setDate(cursor.getDate()+direction)
+ const finish=dateAtNoon(end)
+ while(direction>0?cursor<=finish:cursor>=finish){
+  total++;const iso=`${cursor.getFullYear()}-${String(cursor.getMonth()+1).padStart(2,'0')}-${String(cursor.getDate()).padStart(2,'0')}`
+  const weekend=cursor.getDay()===0||cursor.getDay()===6
+  if(weekend)weekends++;else if(holidaySet.has(iso))holidays++;else business++
+  cursor.setDate(cursor.getDate()+direction)
+ }
+ return{business,weekends,holidays,total}
+}
+
+export function vat(amount:number,input:'supply'|'total',rate=10){
+ const ratio=rate/100
+ const supply=input==='total'?amount/(1+ratio):amount
+ const tax=input==='total'?amount-supply:supply*ratio
+ return{supply,tax,total:supply+tax}
+}
+
+export function savingsInterest(amount:number,annualRate:number,months:number,kind:'deposit'|'installment',compound=false,taxRate=.154){
+ const monthlyRate=annualRate/1200
+ let principal=kind==='deposit'?amount:amount*months
+ let grossInterest=0
+ if(kind==='deposit')grossInterest=compound?amount*(Math.pow(1+monthlyRate,months)-1):amount*annualRate/100*months/12
+ else if(compound)for(let remaining=months;remaining>=1;remaining--)grossInterest+=amount*(Math.pow(1+monthlyRate,remaining)-1)
+ else grossInterest=amount*annualRate/100/12*(months*(months+1)/2)
+ const tax=Math.floor(grossInterest*taxRate),netInterest=grossInterest-tax
+ return{principal,grossInterest,tax,netInterest,maturity:principal+netInterest}
+}
+
+export function partTimePay(hourly:number,hoursPerDay:number,daysPerWeek:number){
+ const weeklyHours=Math.min(40,hoursPerDay*daysPerWeek),weeklyBase=hourly*hoursPerDay*daysPerWeek
+ const weeklyHoliday=weeklyHours>=15?hourly*(weeklyHours/40*8):0
+ const monthly=(weeklyBase+weeklyHoliday)*365/7/12
+ return{weeklyHours,weeklyBase,weeklyHoliday,monthly}
+}
+
+export function socialInsurance(monthlyGross:number,nonTax:number,year=2026,period:'first'|'second'='second'){
+ const taxable=Math.max(0,monthlyGross-nonTax),r=salaryRateInfo(year,period),cap=(pensionCaps[year]||pensionCaps[2026])[period]
+ const pension=Math.min(taxable,cap)*r.pension,health=taxable*r.health,care=health*r.care,employment=taxable*r.employment
+ return{taxable,pension,health,care,employment,employeeTotal:pension+health+care+employment,employerKnown:pension+health+care+employment}
+}

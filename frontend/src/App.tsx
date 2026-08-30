@@ -1,14 +1,14 @@
 import {useEffect,useMemo,useState,type MouseEvent,type ReactNode} from 'react'
-import {addDays,dateAtNoon,diffDays,fullAge,loan,LoanMethod,minimumWages,num,pensionCaps,salaryEstimate,salaryRateInfo,splitExpense,won} from './calculations'
+import {addDays,businessDays2026,dateAtNoon,diffDays,fullAge,holidays2026,loan,LoanMethod,minimumWages,num,partTimePay,pensionCaps,salaryEstimate,salaryRateInfo,savingsInterest,socialInsurance,splitExpense,vat,won} from './calculations'
 import {guides} from './guides'
 import {api,History,Member,type SaveHistory} from './api'
 import {addLocalHistory,clearLocalHistories,loadLocalHistories,removeLocalHistory,type LocalHistory} from './history'
 
 type Tool={id:string;icon:string;title:string;desc:string;group:string}
 const tools:Tool[]=[
- ['date','▦','날짜 차이','두 날짜 사이의 정확한 일수','날짜·시간'],['age','◴','만 나이','기준일의 국제식 만 나이','날짜·시간'],['dday','D','디데이','목표일까지 남은 날짜','날짜·시간'],['percent','%','퍼센트·할인율','증감률과 할인 가격','생활'],['unit','↔','단위 변환','평수·길이·무게 변환','생활'],['ratio','▣','비율·해상도','화면 비율과 새 크기','생활'],['text','Aa','글자·문장 수','공백 포함 글자와 문장','생활'],['random','⚄','랜덤 추첨·팀','공정한 셔플과 팀 나누기','생활'],['timezone','◷','시간대 변환','세계 주요 도시 시간','날짜·시간'],['travel','₩','여행 경비','균등·가중 비용 분담','돈'],['fuel','⛽','연료비·주행비','연비와 거리로 비용 계산','돈'],['saving','◎','목표 저축 기간','목표액까지 필요한 기간','돈'],['study','▤','공부·독서 진도','남은 분량과 일일 목표','성장'],['schedule','✓','일정 계산','반복 일정의 종료일','날짜·시간'],['loan','🏠','대출 계산기','상환 방식별 원금과 이자','돈'],['salary','▥','연봉 계산기','월 실수령액 예상','돈'],['minimum','₩','연도별 최저시급','2011년부터 공식 이력','자료'],['salaryTable','급','연봉 실수령액표','연봉별 월 예상액 비교','자료']
+ ['date','▦','날짜 차이','두 날짜 사이의 정확한 일수','날짜·시간'],['age','◴','만 나이','기준일의 국제식 만 나이','날짜·시간'],['dday','D','디데이','목표일까지 남은 날짜','날짜·시간'],['business','영','영업일 계산기','주말·2026년 공휴일 제외','날짜·시간'],['percent','%','퍼센트·할인율','증감률과 할인 가격','생활'],['vat','VAT','부가세 계산기','공급가액·합계금액 상호 계산','돈'],['unit','↔','단위 변환','평수·길이·무게 변환','생활'],['ratio','▣','비율·해상도','화면 비율과 새 크기','생활'],['text','Aa','글자·문장 수','공백 포함 글자와 문장','생활'],['random','⚄','랜덤 추첨·팀','공정한 셔플과 팀 나누기','생활'],['timezone','◷','시간대 변환','세계 주요 도시 시간','날짜·시간'],['travel','₩','여행 경비','균등·가중 비용 분담','돈'],['fuel','⛽','연료비·주행비','연비와 거리로 비용 계산','돈'],['saving','◎','목표 저축 기간','목표액까지 필요한 기간','돈'],['interest','%','예적금 이자','세후 이자와 만기 수령액','돈'],['parttime','시','알바 급여','주휴수당 포함 월 예상액','돈'],['insurance','4','4대보험 계산기','근로자 사회보험 예상액','돈'],['study','▤','공부·독서 진도','남은 분량과 일일 목표','성장'],['schedule','✓','일정 계산','반복 일정의 종료일','날짜·시간'],['loan','🏠','대출 계산기','상환 방식별 원금과 이자','돈'],['salary','▥','연봉 계산기','월 실수령액 예상','돈'],['minimum','₩','연도별 최저시급','2011년부터 공식 이력','자료'],['salaryTable','급','연봉 실수령액표','연봉별 월 예상액 비교','자료'],['holidays','휴','2026년 공휴일','법정·대체공휴일 목록','자료']
 ].map(([id,icon,title,desc,group])=>({id,icon,title,desc,group}))
-const calculatorTools=tools.filter(x=>!['salary','minimum','salaryTable'].includes(x.id))
+const calculatorTools=tools.filter(x=>!['salary','minimum','salaryTable','holidays'].includes(x.id))
 const today=new Date().toISOString().slice(0,10)
 const n=(v:string)=>Number(v.replaceAll(',',''))||0
 const groupedNumber=(value:string|number)=>{
@@ -29,33 +29,41 @@ function Select({label,value,onChange,options}:{label:string,value:string,onChan
 function Result({main,lines=[],note}:{main:string,lines?:[string,string][],note?:string}){return <section className="result" aria-live="polite"><small>계산 결과</small><strong>{main}</strong>{lines.map(([a,b])=><div className="result-row" key={a}><span>{a}</span><b>{b}</b></div>)}{note&&<p>{note}</p>}</section>}
 
 function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,input:unknown,result:unknown)=>void}){
- const [a,setA]=useState(id==='date'?today:'');const [b,setB]=useState(id==='date'?today:'');const [c,setC]=useState('');const [mode,setMode]=useState('');const [result,setResult]=useState<{main:string;lines?:[string,string][];note?:string;raw?:unknown}|null>(null)
- useEffect(()=>{setA(id==='date'?today:'');setB(id==='date'?today:'');setC('');setMode('');setResult(null)},[id])
+ const [a,setA]=useState(['date','business'].includes(id)?today:'');const [b,setB]=useState(['date','business'].includes(id)?today:'');const [c,setC]=useState('');const [mode,setMode]=useState('');const [result,setResult]=useState<{main:string;lines?:[string,string][];note?:string;raw?:unknown}|null>(null)
+ useEffect(()=>{setA(['date','business'].includes(id)?today:'');setB(['date','business'].includes(id)?today:'');setC('');setMode('');setResult(null)},[id])
  const done=(r:{main:string;lines?:[string,string][];note?:string;raw?:unknown})=>{setResult(r);onCalculated(tools.find(x=>x.id===id)!.title,{a,b,c,mode},r)}
  if(id==='minimum')return <Minimum/>
  if(id==='salaryTable')return <SalaryTable/>
+ if(id==='holidays')return <Holidays/>
  const calculate=()=>{
   const empty=(value:string)=>!value.trim()
   let warning=''
   if(id==='date'&&(empty(a)||empty(b)))warning='시작일과 종료일을 모두 선택해 주세요.'
+  else if(id==='business'&&(empty(a)||empty(b)||!a.startsWith('2026-')||!b.startsWith('2026-')))warning='2026년 안의 시작일과 종료일을 선택해 주세요.'
   else if(id==='age'&&empty(a))warning='생년월일을 선택해 주세요.'
   else if(id==='dday'&&empty(a))warning='목표일을 선택해 주세요.'
   else if(id==='percent'&&(empty(a)||empty(b)))warning='계산할 두 값을 모두 입력해 주세요.'
+  else if(id==='vat'&&n(a)<=0)warning='0보다 큰 금액을 입력해 주세요.'
   else if(id==='unit'&&empty(a))warning='변환할 값을 입력해 주세요.'
   else if(id==='ratio'&&(n(a)<=0||n(b)<=0||n(c)<=0))warning='너비와 높이는 0보다 큰 값으로 입력해 주세요.'
   else if(id==='random'&&!a.split(/[,\n]/).some(x=>x.trim()))warning='추첨하거나 나눌 항목을 입력해 주세요.'
   else if(id==='travel'&&(empty(a)||n(b)<=0))warning='총 경비와 1명 이상의 인원을 입력해 주세요.'
   else if(id==='fuel'&&(empty(a)||n(b)<=0||empty(c)))warning='거리, 0보다 큰 연비와 유가를 입력해 주세요.'
   else if(id==='saving'&&(empty(a)||empty(b)||n(c)<=0))warning='목표액, 현재 금액과 0보다 큰 월 저축액을 입력해 주세요.'
+  else if(id==='interest'&&(n(a)<=0||n(b)<0||n(c)<=0||empty(b)))warning='금액, 0 이상의 금리와 0보다 큰 기간을 입력해 주세요.'
+  else if(id==='parttime'&&(n(a)<=0||n(b)<=0||n(c)<=0||n(b)>24||n(c)>7||n(b)*n(c)>40))warning='시급과 근무시간을 확인해 주세요. 현재 계산기는 주 40시간 이하 근무를 지원합니다.'
+  else if(id==='insurance'&&(n(a)<=0||n(b)<0||n(b)>n(a)))warning='월 총급여와 비과세 급여를 확인해 주세요.'
   else if(id==='study'&&(n(a)<=0||empty(b)||n(c)<=0))warning='전체 분량, 완료 분량과 0보다 큰 남은 일수를 입력해 주세요.'
   else if(id==='schedule'&&(empty(a)||n(b)<=0||n(c)<=0))warning='첫 일정, 횟수와 0보다 큰 간격을 입력해 주세요.'
   else if(id==='loan'&&(n(a)<=0||n(b)<0||n(c)<=0||empty(b)))warning='대출 원금, 0 이상의 이자율과 0보다 큰 기간을 입력해 주세요.'
   else if(id==='salary'&&n(a)<=0)warning='0보다 큰 연봉을 입력해 주세요.'
   if(warning){setResult({main:'입력값을 확인해 주세요',note:warning});return}
   if(id==='date'){const d=diffDays(a,b);done({main:`${Math.abs(d).toLocaleString()}일`,lines:[['방향',d===0?'같은 날':d>0?'종료일이 이후':'종료일이 이전'],['양 끝 날짜 포함',`${Math.abs(d)+1}일`]]})}
+  else if(id==='business'){const x=businessDays2026(a,b,(mode||'include')==='include');done({main:`${x.business.toLocaleString()}영업일`,lines:[['계산한 날짜',`${x.total}일`],['제외한 주말',`${x.weekends}일`],['제외한 평일 공휴일',`${x.holidays}일`]],note:'2026년 대한민국 관공서 공휴일과 대체공휴일을 적용합니다. 회사별 휴무일은 별도로 확인하세요.',raw:x})}
   else if(id==='age'){const base=b||today;const age=fullAge(a,base);done({main:`만 ${age}세`,lines:[['기준일',base],['한국식 연 나이',`${dateAtNoon(base).getFullYear()-dateAtNoon(a).getFullYear()}세`]]})}
   else if(id==='dday'){const d=diffDays(today,a);done({main:d===0?'D-DAY':d>0?`D-${d}`:`D+${Math.abs(d)}`,lines:[['오늘',today],['목표일',a]]})}
   else if(id==='percent'){const base=n(a),value=n(b);if(mode==='discount'){const price=base*(1-value/100);done({main:won(price),lines:[['할인 금액',won(base-price)],['할인율',`${num(value)}%`]]})}else{const pct=base===0?0:(value-base)/Math.abs(base)*100;done({main:`${pct>=0?'+':''}${num(pct)}%`,lines:[['차이',num(value-base)],['기준값',num(base)]]})}}
+  else if(id==='vat'){const x=vat(n(a),(mode||'supply') as 'supply'|'total');done({main:`부가세 ${won(x.tax)}`,lines:[['공급가액',won(x.supply)],['합계금액',won(x.total)]],note:'일반 과세 10% 기준이며 표시 단계에서 원 단위로 반올림합니다.',raw:x})}
   else if(id==='unit'){const value=n(a);const factors:Record<string,[number,string]>= {pyeong:[3.305785,'㎡'],meter:[100,'cm'],km:[1000,'m'],kg:[1000,'g'],lb:[0.45359237,'kg']};const [f,u]=factors[mode||'pyeong'];done({main:`${num(value*f,6)} ${u}`})}
   else if(id==='ratio'){const w=n(a),h=n(b),newW=n(c);const g=(x:number,y:number):number=>y?g(y,x%y):x;const q=g(w,h);done({main:`${w/q}:${h/q}`,lines:[['새 너비',`${num(newW,0)} px`],['새 높이',`${num(newW*h/w,0)} px`]]})}
   else if(id==='text'){const text=a;done({main:`${[...text].length.toLocaleString()}자`,lines:[['공백 제외',[...text.replace(/\s/g,'')].length.toLocaleString()],['단어',text.trim()?text.trim().split(/\s+/).length.toLocaleString():'0'],['문장',(text.match(/[.!?。！？]+/g)||[]).length.toLocaleString()],['줄',text?text.split(/\r?\n/).length.toLocaleString():'0']]})}
@@ -64,6 +72,9 @@ function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,inpu
   else if(id==='travel'){const total=n(a),people=Math.max(1,n(b)),weights=c.split(',').map(n);const shares=mode==='weighted'?splitExpense(total,people,weights.length?weights:Array(people).fill(1)):Array(people).fill(total/people);done({main:`1인 평균 ${won(total/people)}`,lines:shares.map((x,i)=>[`${i+1}번`,won(x)])})}
   else if(id==='fuel'){const distance=n(a),eff=n(b),price=n(c),cost=eff?distance/eff*price:0;done({main:won(cost),lines:[['필요 연료',`${num(eff?distance/eff:0)} L`],['1km당',won(distance?cost/distance:0)]]})}
   else if(id==='saving'){const goal=n(a),current=n(b),monthly=n(c),months=monthly>0?Math.max(0,Math.ceil((goal-current)/monthly)):0;done({main:`${months}개월`,lines:[['예상 달성일',addDays(today,Math.round(months*30.436875))],['남은 금액',won(Math.max(0,goal-current))]]})}
+  else if(id==='interest'){const [kind,interestMode,taxMode]=(mode||'deposit|simple|general').split('|');const x=savingsInterest(n(a),n(b),Math.max(1,n(c)),kind as 'deposit'|'installment',interestMode==='compound',taxMode==='free'?0:.154);done({main:won(x.maturity),lines:[['납입 원금',won(x.principal)],['세전 이자',won(x.grossInterest)],['이자 세금',won(x.tax)],['세후 이자',won(x.netInterest)]],note:'월 단위 단순 추정입니다. 실제 상품의 납입일·일수 계산·우대금리에 따라 달라질 수 있습니다.',raw:x})}
+  else if(id==='parttime'){const x=partTimePay(n(a),n(b),n(c));const minimum=minimumWages.find(v=>v.year===2026)!.hourly;done({main:`월 약 ${won(x.monthly)}`,lines:[['주 소정근로시간',`${num(x.weeklyHours)}시간`],['주 기본급',won(x.weeklyBase)],['주휴수당',won(x.weeklyHoliday)],['2026 최저시급 충족',n(a)>=minimum?'예':'아니요']],note:'주 소정근로일을 모두 근무한 일반적인 경우이며 연장·야간·휴일 가산수당과 세금은 포함하지 않습니다.',raw:x})}
+  else if(id==='insurance'){const year=Number(mode||2026),x=socialInsurance(n(a),n(b),year);done({main:`근로자 ${won(x.employeeTotal)}`,lines:[['보험료 부과 급여',won(x.taxable)],['국민연금',won(x.pension)],['건강보험',won(x.health)],['장기요양',won(x.care)],['고용보험',won(x.employment)],['사업주 동일부담분',won(x.employerKnown)]],note:'사업주 추가 고용보험료와 업종별 산재보험료는 제외했습니다. 실제 기준소득월액·보수월액 결정에 따라 달라질 수 있습니다.',raw:x})}
   else if(id==='study'){const total=n(a),doneValue=n(b),days=Math.max(1,n(c));done({main:`하루 ${num(Math.max(0,total-doneValue)/days)} ${mode||'쪽'}`,lines:[['현재 진도',`${num(total?doneValue/total*100:0)}%`],['남은 분량',num(Math.max(0,total-doneValue))]]})}
   else if(id==='schedule'){const count=Math.max(1,n(b)),interval=Math.max(1,n(c));done({main:addDays(a,(count-1)*interval),lines:[['첫 일정',a],['총 횟수',`${count}회`],['간격',`${interval}일`]]})}
   else if(id==='loan'){const x=loan(n(a),n(b),Math.max(1,n(c)),(mode||'annuity') as LoanMethod);done({main:`월 ${won(x.first)}`,lines:[['마지막 달',won(x.last)],['총 이자',won(x.totalInterest)],['총 상환액',won(x.totalPayment)]],raw:x})}
@@ -71,9 +82,11 @@ function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,inpu
  }
  const inputs=()=>{switch(id){
   case'date':return <><Field label="시작일" type="date" value={a} onChange={setA}/><Field label="종료일" type="date" value={b} onChange={setB}/></>
+  case'business':return <><Field label="시작일 (2026년)" type="date" value={a} onChange={setA}/><Field label="종료일 (2026년)" type="date" value={b} onChange={setB}/><Select label="시작일 처리" value={mode||'include'} onChange={setMode} options={[["include","시작일 포함"],["exclude","시작일 제외"]]}/></>
   case'age':return <><Field label="생년월일" type="date" value={a} onChange={setA}/><Field label="기준일" type="date" value={b||today} onChange={setB}/></>
   case'dday':return <Field label="목표일" type="date" value={a} onChange={setA}/>
   case'percent':return <><Select label="계산 방식" value={mode||'change'} onChange={setMode} options={[["change","증감률"],["discount","할인 가격"]]}/><Field label={mode==='discount'?'원래 가격':'기준값'} value={a} onChange={setA}/><Field label={mode==='discount'?'할인율(%)':'변경값'} value={b} onChange={setB}/></>
+  case'vat':return <><Select label="입력 금액 기준" value={mode||'supply'} onChange={setMode} options={[["supply","공급가액 입력"],["total","합계금액 입력"]]}/><Field label={mode==='total'?'부가세 포함 합계금액':'공급가액'} value={a} onChange={setA}/></>
   case'unit':return <><Select label="변환" value={mode||'pyeong'} onChange={setMode} options={[["pyeong","평 → ㎡"],["meter","m → cm"],["km","km → m"],["kg","kg → g"],["lb","lb → kg"]]}/><Field label="값" value={a} onChange={setA}/></>
   case'ratio':return <><Field label="원본 너비" value={a} onChange={setA}/><Field label="원본 높이" value={b} onChange={setB}/><Field label="새 너비" value={c} onChange={setC}/></>
   case'text':return <label className="field full"><span>텍스트</span><textarea rows={8} value={a} onChange={e=>setA(e.target.value)} placeholder="여기에 글을 붙여 넣으세요."/></label>
@@ -82,6 +95,9 @@ function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,inpu
   case'travel':return <><Field label="총 경비" value={a} onChange={setA}/><Field label="인원" value={b} onChange={setB}/><Select label="분담 방식" value={mode||'equal'} onChange={setMode} options={[["equal","균등"],["weighted","가중치"]]}/>{mode==='weighted'&&<Field label="가중치 (예: 1,2,1)" type="text" value={c} onChange={setC}/>}</>
   case'fuel':return <><Field label="주행 거리 (km)" value={a} onChange={setA}/><Field label="연비 (km/L)" value={b} onChange={setB}/><Field label="유가 (원/L)" value={c} onChange={setC}/></>
   case'saving':return <><Field label="목표 금액" value={a} onChange={setA}/><Field label="현재 금액" value={b} onChange={setB}/><Field label="월 저축액" value={c} onChange={setC}/></>
+  case'interest':return <><Field label={mode.startsWith('installment')?'월 납입액':'예치 금액'} value={a} onChange={setA}/><Field label="연 이자율 (%)" value={b} onChange={setB}/><Field label="기간 (개월)" value={c} onChange={setC}/><Select label="상품·이자·과세" value={mode||'deposit|simple|general'} onChange={setMode} options={[["deposit|simple|general","예금 · 단리 · 일반과세"],["deposit|compound|general","예금 · 월복리 · 일반과세"],["installment|simple|general","적금 · 단리 · 일반과세"],["installment|compound|general","적금 · 월복리 · 일반과세"],["deposit|simple|free","예금 · 단리 · 비과세"],["installment|simple|free","적금 · 단리 · 비과세"]]}/></>
+  case'parttime':return <><Field label="시급" value={a} onChange={setA}/><Field label="하루 근무시간" value={b} onChange={setB}/><Field label="주 근무일수" value={c} onChange={setC}/></>
+  case'insurance':return <><Field label="월 총급여" value={a} onChange={setA}/><Field label="월 비과세 급여" value={b} onChange={setB}/><Select label="적용 연도" value={mode||'2026'} onChange={setMode} options={[["2026","2026"],["2025","2025"],["2024","2024"],["2023","2023"]]}/></>
   case'study':return <><Field label="전체 분량" value={a} onChange={setA}/><Field label="완료 분량" value={b} onChange={setB}/><Field label="남은 일수" value={c} onChange={setC}/><Select label="단위" value={mode||'쪽'} onChange={setMode} options={[["쪽","쪽"],["분","분"],["강","강"]]}/></>
   case'schedule':return <><Field label="첫 일정" type="date" value={a} onChange={setA}/><Field label="횟수" value={b} onChange={setB}/><Field label="간격 (일)" value={c} onChange={setC}/></>
   case'loan':return <><Field label="대출 원금" value={a} onChange={setA}/><Field label="연 이자율 (%)" step="0.01" value={b} onChange={setB}/><Field label="기간 (개월)" value={c} onChange={setC}/><Select label="상환 방식" value={mode||'annuity'} onChange={setMode} options={[["annuity","원리금균등"],["principal","원금균등"],["bullet","만기일시"]]}/></>
@@ -91,6 +107,7 @@ function Calculator({id,onCalculated}:{id:string,onCalculated:(title:string,inpu
 }
 
 function Minimum(){return <div className="table-wrap"><table><thead><tr><th>연도</th><th>시급</th><th>일급(8h)</th><th>월급(209h)</th></tr></thead><tbody>{minimumWages.map(x=><tr key={x.year}><td>{x.year}</td><td>{won(x.hourly)}</td><td>{won(x.daily)}</td><td>{won(x.monthly)}</td></tr>)}</tbody></table><p className="source">최저임금위원회 공식 결정 현황 기준. 2027년은 2026년 8월 고시된 적용 예정액입니다.</p></div>}
+function Holidays(){const weekday=new Intl.DateTimeFormat('ko-KR',{weekday:'short'});return <div className="table-wrap holiday-table"><table><thead><tr><th>날짜</th><th>요일</th><th>공휴일</th></tr></thead><tbody>{holidays2026.map(x=><tr key={x.date}><td>{x.date}</td><td>{weekday.format(dateAtNoon(x.date))}</td><td>{x.name}</td></tr>)}</tbody></table><p className="source">「관공서의 공휴일에 관한 규정」의 2026년 법정·대체공휴일과 임기만료 선거일 기준입니다. 지방공휴일과 회사별 휴무일은 포함하지 않습니다.</p></div>}
 function SalaryTable(){
  const [year,setYear]=useState(2026),[dependents,setDependents]=useState(1),[nonTax,setNonTax]=useState(200000)
  const [period,setPeriod]=useState<'first'|'second'>('second')
@@ -106,7 +123,7 @@ const cachedAuth=():CachedAuth=>(sessionStorage.getItem('wonderlife:auth') as Ca
 const historyMain=(item:DisplayHistory)=>{try{return JSON.parse(item.resultJson).main||'계산 결과 보기'}catch{return '계산 결과 보기'}}
 const validHistory=(item:DisplayHistory)=>!/(NaN|Infinity|undefined)/.test(historyMain(item))
 const historyTime=(value:string)=>{const date=new Date(value),pad=(v:number)=>String(v).padStart(2,'0');return `${date.getFullYear()}.${pad(date.getMonth()+1)}.${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`}
-const modeNames:Record<string,string>={change:'증감률',discount:'할인',pyeong:'평→㎡',meter:'m→cm',km:'km→m',kg:'kg→g',lb:'lb→kg',pick:'추첨',team:'팀 나누기',equal:'균등',weighted:'가중',annuity:'원리금균등',principal:'원금균등',bullet:'만기일시'}
+const modeNames:Record<string,string>={change:'증감률',discount:'할인',include:'시작일 포함',exclude:'시작일 제외',supply:'공급가액',total:'합계금액','deposit|simple|general':'예금·단리·일반과세','deposit|compound|general':'예금·월복리·일반과세','installment|simple|general':'적금·단리·일반과세','installment|compound|general':'적금·월복리·일반과세','deposit|simple|free':'예금·단리·비과세','installment|simple|free':'적금·단리·비과세',pyeong:'평→㎡',meter:'m→cm',km:'km→m',kg:'kg→g',lb:'lb→kg',pick:'추첨',team:'팀 나누기',equal:'균등',weighted:'가중',annuity:'원리금균등',principal:'원금균등',bullet:'만기일시'}
 const historyInput=(item:DisplayHistory)=>{try{const value=JSON.parse(item.inputJson) as Record<string,string>;const clean=(v?:string)=>String(v||'').replace(/\s+/g,' ').trim();const parts=[clean(value.a),clean(value.b),clean(value.c),modeNames[value.mode]||clean(value.mode)].filter(Boolean);return parts.length?parts.join(' · '):'입력값 없음'}catch{return '입력값 확인 불가'}}
 function MainApp(){
  const [initialAuth]=useState<CachedAuth>(cachedAuth)
@@ -124,7 +141,7 @@ function MainApp(){
  return <div className="app"><header><a className="brand" href="#"><i>W</i><span>WonderLife<small>Everyday answers, made simple.</small></span></a><nav><a href="#tools">계산기</a><a href="#data">생활 자료</a><a href="#history">계산 이력</a></nav><div className="account">{!authReady?<span className="account-loading">로그인 확인 중…</span>:member?<><span>{member.email}</span><a href="/logout" onClick={logout}>로그아웃</a></>:<a className="login" href="/oauth2/authorization/google" onClick={login}>Google로 로그인</a>}</div></header>
  <main><section className="hero"><div><p className="eyebrow">DAILY TOOLKIT</p><h1>복잡한 계산을<br/><em>가볍고 정확하게.</em></h1><p>날짜부터 대출까지. 필요한 답만 빠르게 확인하세요.</p></div><div className="hero-card"><span>오늘 가장 많이 찾는 계산</span><b>{featured.title}</b><button onClick={()=>{setActive(featured.id);document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}>바로 계산하기 →</button></div></section>
  <section id="tools" className="catalog"><div className="section-title"><div><small>ALL CALCULATORS</small><h2>무엇을 계산할까요?</h2></div><input aria-label="계산기 검색" placeholder="계산기 검색" value={query} onChange={e=>setQuery(e.target.value)}/></div><div className="cards">{visible.map(x=><button className={'tool-card '+(active===x.id?'active':'')} key={x.id} onClick={()=>{setActive(x.id);document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}><i>{x.icon}</i><span><b>{x.title}</b><small>{x.desc}</small></span><em>→</em></button>)}</div></section>
- <section id="data" className="life-data"><div className="section-title"><div><small>LIFE DATA</small><h2>생활 자료</h2><p>공식 기준 이력과 계산 원리를 한곳에서 확인하세요.</p></div></div><div className="data-cards"><button onClick={()=>{setActive('minimum');document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}><i>₩</i><span><b>연도별 최저시급</b><small>2011년부터 공식 시급·일급·월 환산액</small></span><em>표 보기 →</em></button><button onClick={()=>{setActive('salaryTable');document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}><i>급</i><span><b>연도별 연봉 실수령액</b><small>2020~2026년 보험료·세금 상세 비교</small></span><em>표 보기 →</em></button><a href="/guides"><i>?</i><span><b>계산 가이드</b><small>계산식, 차이가 나는 이유와 자주 묻는 질문</small></span><em>읽기 →</em></a></div></section>
+ <section id="data" className="life-data"><div className="section-title"><div><small>LIFE DATA</small><h2>생활 자료</h2><p>공식 기준 이력과 계산 원리를 한곳에서 확인하세요.</p></div></div><div className="data-cards"><button onClick={()=>{setActive('minimum');document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}><i>₩</i><span><b>연도별 최저시급</b><small>2011년부터 공식 시급·일급·월 환산액</small></span><em>표 보기 →</em></button><button onClick={()=>{setActive('salaryTable');document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}><i>급</i><span><b>연도별 연봉 실수령액</b><small>2020~2026년 보험료·세금 상세 비교</small></span><em>표 보기 →</em></button><button onClick={()=>{setActive('holidays');document.getElementById('workspace')?.scrollIntoView({behavior:'smooth'})}}><i>휴</i><span><b>2026년 공휴일</b><small>법정·대체공휴일과 선거일 목록</small></span><em>표 보기 →</em></button><a href="/guides"><i>?</i><span><b>계산 가이드</b><small>계산식, 차이가 나는 이유와 자주 묻는 질문</small></span><em>읽기 →</em></a></div></section>
  <section id="workspace" className="workspace"><div className="calc-head"><i>{tool.icon}</i><div><small>{tool.group}</small><h2>{tool.title}</h2><p>{tool.desc}</p></div></div><Calculator id={active} onCalculated={(title,input,result)=>void record(title,input,result)}/>{saved&&<div className="save-row"><b>{saved}</b></div>}{activeHistory.length>0&&<div className="calculator-history"><div className="history-heading"><div><small>RECENT 10</small><h3>{tool.title} 최근 이력</h3></div><span>{member?'계정에 저장됨':'이 브라우저에만 저장됨'}</span></div><HistoryRows items={activeHistory}/></div>}</section>
  <section id="history" className="history"><div className="section-title"><div><small>ALL HISTORY</small><h2>전체 계산 이력</h2><p>{member?'로그인 계정에 자동 저장된 계산입니다.':'로그인하면 이 브라우저의 이력을 계정으로 옮겨 다른 기기에서도 볼 수 있습니다.'}</p></div></div>{historyLoading?<div className="empty-history history-loading">계산 이력을 불러오는 중…</div>:displayHistory.length?<HistoryRows items={displayHistory}/>:<div className="empty-history">아직 계산 이력이 없습니다. 계산기를 실행하면 자동으로 기록됩니다.</div>}</section>
  </main><button className="top-button" onClick={goTop} aria-label="페이지 맨 위로 이동"><span>↑</span> 맨 위</button><footer><b>WonderLife</b><span>계산 결과는 참고용이며 중요한 금융·세무 결정 전 공식 기관 또는 전문가와 확인하세요.</span><nav className="footer-links"><a href="/guides">계산 가이드</a><a href="/about">서비스 소개</a><a href="/privacy">개인정보처리방침</a><a href="/terms">이용약관</a><a href="/contact">문의</a></nav></footer></div>}

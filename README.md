@@ -18,13 +18,13 @@
 
 ## AdSense
 
-`frontend/.env.local`의 `VITE_GOOGLE_ADSENSE_CLIENT`에 승인받은 `ca-pub-...` 값을 설정하면 공식 AdSense 스크립트와 계정 메타 태그가 로드됩니다. 값이 없거나 placeholder이면 개발 화면에서 광고 요청을 보내지 않습니다. `ads.txt`는 실제 게시자 ID를 발급받은 뒤 추가합니다.
+`frontend/index.html`의 `<head>`에 공식 AdSense 스크립트와 계정 메타 태그를 두고, `frontend/public/ads.txt`에 승인된 판매자 정보를 게시합니다.
 
 승인 신청 전 체크리스트:
 
 1. 실제 도메인에 HTTPS로 배포하고 모든 계산기·가이드·정책 링크가 로그인 없이 열리는지 확인합니다.
 2. Search Console에서 소유권을 확인하고 실제 도메인을 넣은 `sitemap.xml`을 제출합니다.
-3. AdSense 게시자 ID 발급 후 `VITE_GOOGLE_ADSENSE_CLIENT=ca-pub-...`를 설정하고, `frontend/public/ads.txt`에 Google이 제공한 정확한 한 줄을 추가합니다.
+3. AdSense 게시자 ID 발급 후 `frontend/index.html`과 `frontend/public/ads.txt`에 Google이 제공한 값을 추가합니다.
 4. 계산 가이드를 직접 검토해 서비스 계산식과 맞는지 확인하고, 얇은 자동 생성 Q&A를 대량 게시하지 않습니다.
 5. 모바일 화면, 깨진 링크, 빈 페이지, 공사 중 문구가 없는지 확인한 뒤 사이트 검토를 요청합니다.
 
@@ -47,7 +47,7 @@
 - Build command: `pnpm build`
 - Deploy command: `pnpm deploy` (`deploy` 스크립트가 프로덕션 빌드 후 Wrangler 배포까지 수행합니다.)
 - Worker의 Variables and Secrets에 `API_ORIGIN=https://wonderlife-api.onrender.com`을 Text 변수로 등록합니다. 실제 Render 주소로 교체합니다.
-- AdSense 승인 후 `VITE_GOOGLE_ADSENSE_CLIENT=ca-pub-...`도 등록합니다.
+- AdSense 게시자 ID는 `frontend/index.html`과 `frontend/public/ads.txt`에서 관리하므로 별도의 Cloudflare 환경변수가 필요하지 않습니다.
 - `frontend/wrangler.jsonc`가 빌드 결과물인 `frontend/dist`만 정적 자산으로 배포합니다.
 - `frontend/worker/index.ts`가 API와 OAuth 요청을 같은 도메인에서 Render로 프록시합니다.
 
