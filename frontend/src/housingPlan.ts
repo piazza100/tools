@@ -1,6 +1,6 @@
 export type HousingPlanInput={
  startMonth:string;moveInMonth:string;initialCash:number;monthlySaving:number;additionalFunds:number;depositReturn:number;includeStartMonthSaving?:boolean
- price:number;optionCost:number;contractRate:number;includeContractAtStart?:boolean;interimRate:number;interimCount:number;loanInstallments:number
+ price:number;optionCost:number;contractRate:number;includeContractAtStart?:boolean;payAcquisitionTaxByCard?:boolean;interimRate:number;interimCount:number;loanInstallments:number
  firstInterimMonth:string;interimInterval:number;interimMonths?:string[];annualLoanRate:number;balanceRate:number;acquisitionTaxRate:number;incidentalCost:number;loanRounds?:number[]
  manualEvents?:{month:string;amount:number;memo:string}[]
 }
@@ -32,7 +32,7 @@ export function housingPlan(input:HousingPlanInput):HousingPlanResult{
  const interimInterest=loanDraws.reduce((sum,x)=>sum+x.amount*(input.annualLoanRate/100)*Math.max(0,end-x.month)/12,0)
  const balance=input.price*input.balanceRate/100
  const acquisitionTax=(input.price+input.optionCost)*input.acquisitionTaxRate/100
- const moveInOutflow=balance+input.optionCost+acquisitionTax+input.incidentalCost+interimLoanPrincipal+interimInterest
+ const moveInOutflow=balance+input.optionCost+(input.payAcquisitionTaxByCard?0:acquisitionTax)+input.incidentalCost+interimLoanPrincipal+interimInterest
  const events=new Map<number,{property:number;housing:number;extra:number;memos:string[]}>()
  const add=(month:number,property:number,housing:number,memo:string,extra=0)=>{const current=events.get(month)||{property:0,housing:0,extra:0,memos:[]};current.property+=property;current.housing+=housing;current.extra+=extra;if(memo)current.memos.push(memo);events.set(month,current)}
  if(input.includeContractAtStart!==false)add(start,-contract,0,`계약금 ${input.contractRate}% 납부`)
@@ -41,7 +41,7 @@ export function housingPlan(input:HousingPlanInput):HousingPlanResult{
   const financed=loanRoundSet.has(i+1)
   add(month,financed?0:-installment,0,financed?`중도금 ${i+1}회차 대출 실행`:`중도금 ${i+1}회차 현금 납부`)
  }
- add(end,-moveInOutflow,input.depositReturn,'입주 정산 · 대출 원금·이자 상환')
+ add(end,-moveInOutflow,input.depositReturn,input.payAcquisitionTaxByCard?'입주 정산 · 대출 상환 · 취득세 카드':'입주 정산 · 대출 원금·이자 상환')
  for(const event of input.manualEvents||[])add(monthIndex(event.month),0,0,event.memo||'직접 입력',event.amount)
  const rows:HousingPlanRow[]=[];let cash=input.initialCash
  for(let month=start;month<=end;month++){

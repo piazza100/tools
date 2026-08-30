@@ -42,4 +42,11 @@ describe('housing subscription cash-flow plan',()=>{
   expect(()=>housingPlan({...base,interimMonths:['2025-12','2026-08']})).toThrow('계산 시작월부터 입주 예정월 사이')
   expect(()=>housingPlan({...base,interimMonths:['2026-08','2026-07']})).toThrow('이전 회차보다 뒤')
  })
+ it('keeps acquisition tax in project cost but excludes it from cash when paid by card',()=>{
+  const base={startMonth:'2026-01',moveInMonth:'2026-02',initialCash:1000,monthlySaving:0,additionalFunds:0,depositReturn:0,price:1000,optionCost:0,contractRate:0,interimRate:0,interimCount:0,loanInstallments:0,firstInterimMonth:'2026-01',interimInterval:1,annualLoanRate:0,balanceRate:0,acquisitionTaxRate:10,incidentalCost:0}
+  const cash=housingPlan(base),card=housingPlan({...base,payAcquisitionTaxByCard:true})
+  expect(card.rows.at(-1)!.closing-cash.rows.at(-1)!.closing).toBe(100)
+  expect(card.totalProjectCost).toBe(cash.totalProjectCost)
+  expect(card.rows.at(-1)!.memo).toContain('취득세 카드')
+ })
 })
