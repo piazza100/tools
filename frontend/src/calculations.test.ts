@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {businessDays2026,diffDays,fullAge,holidaysByYear,loan,minimumWages,monthlyWithholding,partTimePay,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat} from './calculations'
+import {businessDays2026,carOwnershipCost,diffDays,earlyRepayment,fullAge,holidaysByYear,housingRentComparison,loan,minimumWages,monthlyBudget,monthlyWithholding,movingCost,partTimePay,repaymentCapacity,retirementEstimate,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat} from './calculations'
 describe('exact calculations',()=>{
  it('handles leap day and calendar dates',()=>expect(diffDays('2024-02-28','2024-03-01')).toBe(2))
  it('calculates international age before birthday',()=>expect(fullAge('2000-12-31','2026-08-28')).toBe(25))
@@ -63,5 +63,22 @@ describe('exact calculations',()=>{
   const x=socialInsurance(3000000,200000,2026)
   expect(Math.round(x.health)).toBe(100660)
   expect(Math.round(x.care)).toBe(13227)
+ })
+ it('calculates housing decision scenarios without losing cost components',()=>{
+  const capacity=repaymentCapacity(60000000,0,300000000,4,360,40)
+  expect(capacity.payment).toBeGreaterThan(1400000)
+  expect(capacity.dsr).toBeGreaterThan(28)
+  const rent=housingRentComparison(300000000,0,200000000,4,150000,24,3)
+  expect(rent.total).toBe(25600000)
+ })
+ it('calculates budget, prepayment, vehicle and moving totals',()=>{
+  expect(monthlyBudget(3500000,1200000,900000,400000,10000000,50000000).available).toBe(1000000)
+  expect(earlyRepayment(200000000,4,240,30000000,1).netBenefit).toBeGreaterThan(0)
+  expect(carOwnershipCost(40000000,10000000,5,60,1200000,500000,200000,100000,600000).monthlyTotal).toBeGreaterThan(800000)
+  expect(movingCost(1,2,3,4,5,6,7).total).toBe(28)
+ })
+ it('requires one year for a retirement allowance estimate',()=>{
+  expect(retirementEstimate('2025-01-01','2025-06-30',3000000).retirement).toBe(0)
+  expect(retirementEstimate('2024-01-01','2025-01-01',3000000).retirement).toBeGreaterThanOrEqual(3000000)
  })
 })

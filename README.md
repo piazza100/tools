@@ -2,8 +2,8 @@
 
 날짜, 생활, 금융, 학습 계산기와 공식 생활 자료를 한곳에 제공하는 반응형 웹 서비스입니다.
 
-- 비회원: 모든 계산 기능 사용 가능, 계산기별 최근 5개 이력을 현재 브라우저에 저장
-- Google 로그인 회원: 브라우저 이력을 계정 DB로 이관하고 이후 계산 입력과 결과를 자동 저장·조회·삭제
+- 비회원: 모든 계산 기능 사용 가능, 계산 입력과 결과를 브라우저나 서버에 저장하지 않음
+- Google 로그인 회원: 계산 입력과 결과를 계정 DB에 자동 저장하고 본인 이력만 조회·삭제
 - Frontend: React + TypeScript + Vite
 - Backend: Java 17 + Spring Boot + MyBatis + Flyway
 - Database: Aiven MySQL

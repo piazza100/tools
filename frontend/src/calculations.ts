@@ -132,3 +132,59 @@ export function socialInsurance(monthlyGross:number,nonTax:number,year=2026,peri
  const pension=Math.min(taxable,cap)*r.pension,health=taxable*r.health,care=health*r.care,employment=taxable*r.employment
  return{taxable,pension,health,care,employment,employeeTotal:pension+health+care+employment,employerKnown:pension+health+care+employment}
 }
+
+export function repaymentCapacity(annualIncome:number,existingAnnualDebt:number,principal:number,annualRate:number,months:number,dsrLimit=40){
+ const payment=loan(principal,annualRate,months,'annuity').first
+ const annualPayment=payment*12
+ const dsr=annualIncome>0?(existingAnnualDebt+annualPayment)/annualIncome*100:0
+ const availableAnnual=Math.max(0,annualIncome*dsrLimit/100-existingAnnualDebt)
+ const monthlyRate=annualRate/1200,availableMonthly=availableAnnual/12
+ const affordablePrincipal=monthlyRate===0?availableMonthly*months:availableMonthly*(Math.pow(1+monthlyRate,months)-1)/(monthlyRate*Math.pow(1+monthlyRate,months))
+ return{payment,annualPayment,dsr,availableAnnual,affordablePrincipal,withinLimit:dsr<=dsrLimit}
+}
+
+export function monthlyBudget(netIncome:number,fixed:number,living:number,debt:number,currentSavings:number,target:number){
+ const available=netIncome-fixed-living-debt
+ const emergencyBase=fixed+living+debt
+ const remaining=Math.max(0,target-currentSavings)
+ const targetMonths=remaining===0?0:available>0?Math.ceil(remaining/available):Infinity
+ return{available,emergency3:emergencyBase*3,emergency6:emergencyBase*6,emergency12:emergencyBase*12,targetMonths}
+}
+
+export function housingRentComparison(deposit:number,monthlyRent:number,loanAmount:number,annualRate:number,maintenance:number,months:number,opportunityRate:number){
+ const loanInterest=loanAmount*annualRate/100*months/12
+ const opportunity=Math.max(0,deposit-loanAmount)*opportunityRate/100*months/12
+ const rent=monthlyRent*months,maintenanceTotal=maintenance*months
+ return{loanInterest,opportunity,rent,maintenance:maintenanceTotal,total:loanInterest+opportunity+rent+maintenanceTotal,monthlyAverage:(loanInterest+opportunity+rent+maintenanceTotal)/months}
+}
+
+export function earlyRepayment(balance:number,annualRate:number,months:number,repayAmount:number,feeRate:number){
+ const before=loan(balance,annualRate,months,'annuity')
+ const afterBalance=Math.max(0,balance-repayAmount),after=loan(afterBalance,annualRate,months,'annuity')
+ const fee=repayAmount*feeRate/100,interestSaved=before.totalInterest-after.totalInterest
+ return{beforePayment:before.first,afterPayment:after.first,fee,interestSaved,netBenefit:interestSaved-fee,afterBalance}
+}
+
+export function retirementEstimate(start:string,end:string,averageMonthlyWage:number,unusedLeaveDays=0){
+ const serviceDays=Math.max(0,diffDays(start,end)+1),dailyWage=averageMonthlyWage/30
+ const retirement=serviceDays>=365?dailyWage*30*(serviceDays/365):0
+ const leavePay=dailyWage*unusedLeaveDays
+ return{serviceDays,serviceYears:serviceDays/365,dailyWage,retirement,leavePay,total:retirement+leavePay}
+}
+
+export function leaveIncome(monthlyWage:number,months:number,replacementRate:number,monthlyCap:number,monthlyFloor=0){
+ const monthly=Math.min(monthlyCap,Math.max(monthlyFloor,monthlyWage*replacementRate/100))
+ const total=monthly*months,loss=Math.max(0,monthlyWage-monthly)*months
+ return{monthly,total,loss,originalTotal:monthlyWage*months}
+}
+
+export function carOwnershipCost(price:number,downPayment:number,annualRate:number,months:number,insuranceAnnual:number,taxAnnual:number,fuelMonthly:number,parkingMonthly:number,maintenanceAnnual:number){
+ const financed=Math.max(0,price-downPayment),finance=loan(financed,annualRate,Math.max(1,months),'annuity')
+ const monthlyOther=(insuranceAnnual+taxAnnual+maintenanceAnnual)/12+fuelMonthly+parkingMonthly
+ return{financed,installment:finance.first,monthlyOther,monthlyTotal:finance.first+monthlyOther,annualTotal:(finance.first+monthlyOther)*12,totalInterest:finance.totalInterest}
+}
+
+export function movingCost(brokerage:number,moving:number,repair:number,furniture:number,appliances:number,registration:number,depositGap:number){
+ const items={brokerage,moving,repair,furniture,appliances,registration,depositGap}
+ return{...items,total:Object.values(items).reduce((sum,value)=>sum+Math.max(0,value),0)}
+}
