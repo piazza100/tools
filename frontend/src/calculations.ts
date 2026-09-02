@@ -188,3 +188,12 @@ export function movingCost(brokerage:number,moving:number,repair:number,furnitur
  const items={brokerage,moving,repair,furniture,appliances,registration,depositGap}
  return{...items,total:Object.values(items).reduce((sum,value)=>sum+Math.max(0,value),0)}
 }
+
+export function wageConversion(amount:number,input:'hourly'|'monthly'|'annual',weeklyHours:number,includeWeeklyHoliday=true){
+ const hours=Math.max(0,Math.min(40,weeklyHours))
+ const weeklyHolidayHours=includeWeeklyHoliday&&hours>=15?hours/40*8:0
+ const monthlyPaidHours=(hours+weeklyHolidayHours)*365/7/12
+ const hourly=input==='hourly'?amount:monthlyPaidHours>0?(input==='monthly'?amount:amount/12)/monthlyPaidHours:0
+ const monthly=input==='monthly'?amount:input==='annual'?amount/12:hourly*monthlyPaidHours
+ return{hourly,daily:hourly*(hours>=8?8:hours),weekly:hourly*(hours+weeklyHolidayHours),monthly,annual:monthly*12,weeklyHours:hours,weeklyHolidayHours,monthlyPaidHours}
+}

@@ -34,6 +34,8 @@
 
 각 계산기는 `/calculators/{slug}`, 생활 자료는 `/data/{slug}` 독립 URL을 사용하며 페이지별 제목, 설명, canonical, 계산 방법과 출처를 제공합니다. Cloudflare Worker는 배포 요청의 실제 origin을 사용해 `/robots.txt`와 `/sitemap.xml`을 동적으로 생성하므로 별도의 도메인 하드코딩이 필요하지 않습니다.
 
+모든 계산기 페이지에는 입력·계산 과정·결과 해석으로 구성된 예제가 있으며, `/methodology`에서 금액 반올림, 달력 날짜, 금융·근로 기준의 검토 원칙과 주요 변경 이력을 공개합니다. 시급·월급·연봉 변환기는 주 소정근로시간과 주휴시간 포함 여부를 기준으로 세전 급여 단위를 환산합니다.
+
 ## Production deployment
 
 ### 1. Render backend

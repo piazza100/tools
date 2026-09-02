@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {businessDays2026,carOwnershipCost,diffDays,earlyRepayment,fullAge,holidaysByYear,housingRentComparison,loan,minimumWages,monthlyBudget,monthlyWithholding,movingCost,partTimePay,repaymentCapacity,retirementEstimate,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat} from './calculations'
+import {businessDays2026,carOwnershipCost,diffDays,earlyRepayment,fullAge,holidaysByYear,housingRentComparison,loan,minimumWages,monthlyBudget,monthlyWithholding,movingCost,partTimePay,repaymentCapacity,retirementEstimate,salaryEstimate,savingsInterest,socialInsurance,splitExpense,vat,wageConversion} from './calculations'
 describe('exact calculations',()=>{
  it('handles leap day and calendar dates',()=>expect(diffDays('2024-02-28','2024-03-01')).toBe(2))
  it('calculates international age before birthday',()=>expect(fullAge('2000-12-31','2026-08-28')).toBe(25))
@@ -80,5 +80,13 @@ describe('exact calculations',()=>{
  it('requires one year for a retirement allowance estimate',()=>{
   expect(retirementEstimate('2025-01-01','2025-06-30',3000000).retirement).toBe(0)
   expect(retirementEstimate('2024-01-01','2025-01-01',3000000).retirement).toBeGreaterThanOrEqual(3000000)
+ })
+ it('converts hourly, monthly and annual wages with optional weekly holiday hours',()=>{
+  const hourly=wageConversion(10320,'hourly',40,true)
+  expect(Math.round(hourly.monthly)).toBe(2152457)
+  expect(hourly.weeklyHolidayHours).toBe(8)
+  const monthly=wageConversion(hourly.monthly,'monthly',40,true)
+  expect(monthly.hourly).toBeCloseTo(10320)
+  expect(wageConversion(36000000,'annual',40,false).monthly).toBe(3000000)
  })
 })
