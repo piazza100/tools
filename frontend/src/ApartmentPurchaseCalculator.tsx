@@ -1,4 +1,5 @@
 import {useEffect,useMemo,useState} from 'react'
+import {focusNumericInput} from './numericInput'
 
 type Props={onCalculated:(title:string,input:unknown,result:unknown)=>void;restoreInput?:Record<string,unknown>|null}
 type PaymentKind='contract'|'interim'
@@ -13,7 +14,7 @@ const fromWon=(v:unknown)=>String(Math.round(Number(v||0)/10000))
 const format=(v:string)=>{const x=v.replaceAll(',','').replace(/[^0-9.-]/g,'');if(!x)return '';return x.replace(/\B(?=(\d{3})+(?!\d))/g,',')}
 const show=(v:number)=>`${Math.round(v/10000).toLocaleString()}만원`
 const Month=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><input maxLength={7} value={value} placeholder="YYYY-MM" onChange={e=>set(e.target.value.replace(/[^0-9-]/g,''))}/></label>
-const Money=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><span className="input-unit"><input inputMode="numeric" value={format(value)} onChange={e=>set(format(e.target.value))}/><em>만원</em></span></label>
+const Money=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><span className="input-unit"><input inputMode="numeric" value={format(value)} onFocus={e=>focusNumericInput(value,()=>set(''),e)} onChange={e=>set(format(e.target.value))}/><em>만원</em></span></label>
 
 export default function ApartmentPurchaseCalculator({onCalculated,restoreInput}:Props){
  const base=now()

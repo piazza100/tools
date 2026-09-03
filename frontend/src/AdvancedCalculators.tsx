@@ -1,12 +1,13 @@
 import {useEffect,useMemo,useState,type ReactNode} from 'react'
 import {carOwnershipCost,earlyRepayment,housingRentComparison,leaveIncome,monthlyBudget,movingCost,repaymentCapacity,retirementEstimate,won,num} from './calculations'
+import {focusNumericInput} from './numericInput'
 
 type Props={id:string;title:string;restoreInput?:Record<string,unknown>|null;onCalculated:(title:string,input:unknown,result:unknown)=>void;member:boolean;onNavigate?:(id:string,input?:Record<string,unknown>)=>void}
 type Values=Record<string,string>
 type CalcResult={main:string;lines:[string,string][];note:string;raw:Record<string,unknown>}
 const n=(value:string)=>Number(value.replaceAll(',',''))||0
 const grouped=(value:string)=>{const raw=value.replaceAll(',','').replace(/[^0-9.-]/g,'');if(!raw)return'';const [integer,decimal]=raw.split('.');return Number(integer||0).toLocaleString('ko-KR')+(raw.includes('.')?'.'+(decimal??''):'')}
-function Field({label,value,onChange,type='number',children}:{label:string;value?:string;onChange?:(value:string)=>void;type?:string;children?:ReactNode}){return <label className="field"><span>{label}</span>{children||<input type={type==='number'?'text':type} inputMode={type==='number'?'decimal':undefined} value={type==='number'?grouped(value||''):value||''} onChange={e=>onChange?.(type==='number'?grouped(e.target.value):e.target.value)}/>}</label>}
+function Field({label,value,onChange,type='number',children}:{label:string;value?:string;onChange?:(value:string)=>void;type?:string;children?:ReactNode}){const numeric=type==='number';return <label className="field"><span>{label}</span>{children||<input type={numeric?'text':type} inputMode={numeric?'decimal':undefined} value={numeric?grouped(value||''):value||''} onFocus={numeric?e=>focusNumericInput(value,onChange?()=>onChange(''):()=>{},e):undefined} onChange={e=>onChange?.(numeric?grouped(e.target.value):e.target.value)}/>}</label>}
 const defaults:Record<string,Values>={
  capacity:{income:'60000000',existing:'0',principal:'300000000',rate:'4',years:'30',limit:'40'},
  budget:{income:'3500000',fixed:'1200000',living:'900000',debt:'400000',savings:'10000000',target:'50000000'},

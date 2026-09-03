@@ -1,9 +1,10 @@
 import {useEffect,useMemo,useState} from 'react'
+import {focusNumericInput} from './numericInput'
 type Props={onCalculated:(title:string,input:unknown,result:unknown)=>void;restoreInput?:Record<string,unknown>|null}
 const keys=['ownCash','deposit','sale','savings','gift','mortgage','credit','other'] as const
 const labels:Record<typeof keys[number],string>={ownCash:'보유 현금',deposit:'임대보증금 회수',sale:'부동산 처분대금',savings:'예금·적금 만기',gift:'증여·상속·가족 지원',mortgage:'주택담보대출',credit:'신용·기타 대출',other:'기타 자금'}
 const raw=(v:string)=>Number(v.replaceAll(',',''))||0,won=(v:string)=>raw(v)*10000,from=(v:unknown)=>String(Math.round(Number(v||0)/10000)),fmt=(v:string)=>{const x=v.replaceAll(',','').replace(/[^0-9.-]/g,'');return x?x.replace(/\B(?=(\d{3})+(?!\d))/g,','):''},show=(v:number)=>`${Math.round(v/10000).toLocaleString()}만원`
-const Money=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><span className="input-unit"><input inputMode="numeric" value={fmt(value)} onChange={e=>set(fmt(e.target.value))}/><em>만원</em></span></label>
+const Money=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><span className="input-unit"><input inputMode="numeric" value={fmt(value)} onFocus={e=>focusNumericInput(value,()=>set(''),e)} onChange={e=>set(fmt(e.target.value))}/><em>만원</em></span></label>
 export default function FundingSourceCalculator({onCalculated,restoreInput}:Props){
  const [price,setPrice]=useState(''),[costs,setCosts]=useState(''),[values,setValues]=useState<Record<typeof keys[number],string>>(()=>Object.fromEntries(keys.map(k=>[k,''])) as Record<typeof keys[number],string>),[notes,setNotes]=useState(''),[result,setResult]=useState<{required:number;total:number;gap:number;debt:number;own:number}|null>(null),[error,setError]=useState('')
  useEffect(()=>{if(!restoreInput)return;setPrice(from(restoreInput.price));setCosts(from(restoreInput.costs));setValues(Object.fromEntries(keys.map(k=>[k,from(restoreInput[k])])) as Record<typeof keys[number],string>);setNotes(String(restoreInput.notes||''));setResult(null)},[restoreInput])

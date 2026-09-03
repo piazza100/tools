@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useState} from 'react'
 import {housingPlan,type HousingPlanInput,type HousingPlanResult,type HousingPlanRow} from './housingPlan'
+import {focusNumericInput} from './numericInput'
 
 type ExtraEvent={id:string;month:string;amount:string;memo:string}
 type Period='month'|'quarter'|'half'|'year'
@@ -15,8 +16,8 @@ const validMonthValue=(value:string)=>/^\d{4}-(0[1-9]|1[0-2])$/.test(value)
 const man=(v:number)=>`${Math.round(v/10000).toLocaleString('ko-KR')}만원`
 const monthPlus=(base:string,n:number)=>{const [y,m]=base.split('-').map(Number),d=new Date(y,m-1+n,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
 const currentMonth=(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`})()
-const Money=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><span className="input-unit"><input type="text" inputMode="numeric" value={grouped(value)} onChange={e=>set(grouped(e.target.value))}/><em>만원</em></span></label>
-const NumberField=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><input type="text" inputMode="decimal" value={grouped(value)} onChange={e=>set(grouped(e.target.value))}/></label>
+const Money=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><span className="input-unit"><input type="text" inputMode="numeric" value={grouped(value)} onFocus={e=>focusNumericInput(value,()=>set(''),e)} onChange={e=>set(grouped(e.target.value))}/><em>만원</em></span></label>
+const NumberField=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=><label className="field"><span>{label}</span><input type="text" inputMode="decimal" value={grouped(value)} onFocus={e=>focusNumericInput(value,()=>set(''),e)} onChange={e=>set(grouped(e.target.value))}/></label>
 const Text=({label,value,set}:{label:string;value:string;set:(v:string)=>void})=>{const complete=value.replace(/\D/g,'').length===6,invalid=complete&&!validMonthValue(value);return <label className="field"><span>{label}</span><input className={invalid?'invalid-input':''} aria-invalid={invalid} type="text" inputMode="numeric" maxLength={7} value={value} placeholder="YYYY-MM" onChange={e=>set(formatMonth(e.target.value))}/></label>}
 const periodKey=(month:string,p:Period)=>{const [y,m]=month.split('-').map(Number);return p==='month'?month:p==='quarter'?`${y}년 ${Math.ceil(m/3)}분기`:p==='half'?`${y}년 ${m<=6?'상반기':'하반기'}`:`${y}년`}
 const aggregate=(rows:HousingPlanRow[],p:Period)=>{if(p==='month')return rows.map(row=>({...row,memo:cleanMemo(row.memo)}));const groups=new Map<string,HousingPlanRow>();for(const row of rows){const key=periodKey(row.month,p),old=groups.get(key),memo=cleanMemo(row.memo);groups.set(key,old?{...old,saving:old.saving+row.saving,extra:old.extra+row.extra,property:old.property+row.property,housing:old.housing+row.housing,closing:row.closing,memo:[old.memo,memo].filter(Boolean).join(' · ')}:{...row,month:key,memo})}return [...groups.values()]}
