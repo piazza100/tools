@@ -39,3 +39,8 @@ management.endpoints.web.exposure.include: health,info
 app:
   cors.allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  price-collection:
+    service-key: ${DATA_GO_KR_SERVICE_KEY:}
+    job-token: ${PRICE_COLLECTION_JOB_TOKEN:}
+    endpoint: https://apis.data.go.kr/B552845/recent/price
+    page-size: 500
