@@ -44,3 +44,6 @@ app:
     job-token: ${PRICE_COLLECTION_JOB_TOKEN:}
     endpoint: https://apis.data.go.kr/B552845/recent/price
     page-size: 500
+  price-lookup:
+    period-endpoint: https://apis.data.go.kr/B552845/periodRetail/price
+    region-endpoint: https://apis.data.go.kr/B552845/perRegion/price
