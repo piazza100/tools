@@ -21,11 +21,12 @@ import java.time.format.DateTimeFormatter;
   @Value("${app.price-collection.service-key:}")String key,@Value("${app.price-collection.endpoint}")String endpoint,
   @Value("${app.price-collection.page-size:500}")int pageSize){this.mapper=mapper;this.json=json;this.client=builder.build();this.key=key;this.endpoint=endpoint;this.pageSize=pageSize;}
 
- public Result collect(){
+ public Result collect(boolean force){
   if(key.isBlank())throw new IllegalStateException("DATA_GO_KR_SERVICE_KEY is not configured");
-  LocalDate businessDate=LocalDate.now(SEOUL);Long existing=mapper.runId(businessDate);if(existing!=null)return new Result(existing,0,true);
+  LocalDate businessDate=LocalDate.now(SEOUL);Long existing=mapper.runId(businessDate);
+  if(existing!=null&&!force)return new Result(existing,0,true,false,businessDate,mapper.runStatus(existing));
   var run=new PriceMapper.MutableId();
-  try{mapper.startRun(businessDate,run);}catch(DuplicateKeyException duplicate){return new Result(mapper.runId(businessDate),0,true);}
+  if(existing!=null){run.id=existing;mapper.restartRun(existing);}else try{mapper.startRun(businessDate,run);}catch(DuplicateKeyException duplicate){long id=mapper.runId(businessDate);return new Result(id,0,true,false,businessDate,mapper.runStatus(id));}
   int saved=0;
   try{
    int page=1,total=Integer.MAX_VALUE;
@@ -39,7 +40,7 @@ import java.time.format.DateTimeFormatter;
     if(rows.isArray())for(JsonNode row:rows)if(save(row))saved++;
     page++;
    }
-   mapper.finishRun(run.id,saved);return new Result(run.id,saved,false);
+   mapper.finishRun(run.id,saved);return new Result(run.id,saved,false,force,businessDate,"SUCCESS");
   }catch(Exception error){mapper.failRun(run.id,truncate(error.getMessage()));throw new IllegalStateException("Daily price collection failed",error);}
  }
  private boolean save(JsonNode row){
@@ -52,5 +53,5 @@ import java.time.format.DateTimeFormatter;
  private static String text(JsonNode row,String field){return row.path(field).asText("").trim();}
  private static BigDecimal decimal(JsonNode row,String field){String value=text(row,field).replace(",","");if(value.isBlank()||"-".equals(value))return null;try{return new BigDecimal(value);}catch(NumberFormatException ignored){return null;}}
  private static String truncate(String value){if(value==null)return "Unknown error";return value.length()>1000?value.substring(0,1000):value;}
- public record Result(long runId,int itemCount,boolean alreadyCollected){}
+ public record Result(long runId,int itemCount,boolean alreadyCollected,boolean forced,LocalDate businessDate,String status){}
 }

@@ -38,6 +38,13 @@
 
 ## Production deployment
 
+### Daily basket price collection
+
+- Cloudflare Worker Cron Trigger runs at `21:30 UTC`, which is `06:30 Asia/Seoul`, once per day.
+- Register the same `PRICE_COLLECTION_JOB_TOKEN` secret in both Render and Cloudflare Workers. Register `DATA_GO_KR_SERVICE_KEY` only in Render.
+- The cron calls `POST /api/internal/prices/collect`. A repeated normal call on the same Seoul calendar date returns `alreadyCollected: true` without calling the public data API.
+- An administrator can intentionally recollect the day with `POST /api/internal/prices/collect?force=true`. Forced collection replaces the raw response pages and upserts the same source-date snapshots.
+
 ### 1. Render backend
 
 - PixelLife와 동일하게 저장소 루트의 `Dockerfile`을 사용하는 Docker Web Service로 생성합니다.

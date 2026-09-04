@@ -1,6 +1,7 @@
 interface Env {
   ASSETS: { fetch(request: Request): Promise<Response> }
   API_ORIGIN?: string
+  PRICE_COLLECTION_JOB_TOKEN?: string
 }
 
 const API_PATHS = ['/api/', '/oauth2/', '/login/', '/logout']
@@ -46,5 +47,13 @@ export default {
       statusText: upstream.statusText,
       headers: upstream.headers,
     })
+  },
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    const apiOrigin=String(env.API_ORIGIN||'').replace(/\/$/,'')
+    const token=String(env.PRICE_COLLECTION_JOB_TOKEN||'')
+    if(!apiOrigin||!token)throw new Error('Price collection cron is not configured')
+    ctx.waitUntil(fetch(`${apiOrigin}/api/internal/prices/collect`,{method:'POST',headers:{'X-Price-Job-Token':token}}).then(async response=>{
+      if(!response.ok)throw new Error(`Price collection failed: ${response.status} ${await response.text()}`)
+    }))
   },
 }

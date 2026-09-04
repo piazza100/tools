@@ -4,6 +4,8 @@ CREATE TABLE tools_price_collection_runs (
  started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
  finished_at TIMESTAMP NULL,
  status VARCHAR(16) NOT NULL,
+ attempt_count INT NOT NULL DEFAULT 1,
+ forced_at TIMESTAMP NULL,
  item_count INT NOT NULL DEFAULT 0,
  error_message VARCHAR(1000) NULL,
  UNIQUE KEY tools_uk_price_run_date (business_date)
