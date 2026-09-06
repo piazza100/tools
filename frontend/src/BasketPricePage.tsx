@@ -1,6 +1,7 @@
 import {useEffect,useMemo,useState} from 'react'
 import {api,type PriceDashboard} from './api'
 import {basketSummary,changeRate,signalFor,type BasketPriceItem} from './basketPriceStats'
+import SiteHeader from './SiteHeader'
 
 const demo:PriceDashboard={asOfDate:'2026-09-02',source:'한국농수산식품유통공사(aT) 예시 데이터',demo:true,items:[
  {itemCode:'rice',name:'쌀',unit:'10kg',quantity:1,currentPrice:28100,dayAgoPrice:28000,weekAgoPrice:27700,monthAgoPrice:27400,yearAgoPrice:26500},
@@ -24,8 +25,8 @@ export default function BasketPricePage(){
  const displayed=preview?demo:data
  const items=useMemo(()=>displayed?.items||[],[displayed])
  const summary=useMemo(()=>basketSummary(items),[items])
- if(loading)return <div className="price-app"><PriceHeader/><main className="price-page"><p role="status">가격 데이터를 불러오는 중입니다…</p></main></div>
- return <div className="price-app"><PriceHeader/><main className="price-page">
+ if(loading)return <div className="price-app"><SiteHeader/><main className="price-page"><p role="status">가격 데이터를 불러오는 중입니다…</p></main></div>
+ return <div className="price-app"><SiteHeader/><main className="price-page">
   <a className="price-back" href="/">← WonderLife 홈</a>
   <section className="price-hero"><div><p className="eyebrow">MY BASKET PRICE INDEX</p><h1>내 장바구니 물가는<br/><em>얼마나 달라졌을까요?</em></h1><p>매일 수집한 가격으로 자주 사는 품목의 변화를 한눈에 확인합니다.</p></div><div className="price-total"><small>{preview?'90일 누적 후 예상 화면':'오늘의 장바구니'}</small><strong>{won.format(summary.total)}</strong><span className={(summary.monthRate||0)>0?'up':'down'}>한 달 전보다 {rate(summary.monthRate)}</span></div></section>
   <nav className="price-api-tabs" aria-label="가격 API 메뉴"><a href="/data/retail-price-history">기간별 소매가격</a><a href="/data/regional-prices">지역별 품목 가격</a><a className="active" href="/data/basket-price-index" aria-current="page">장바구니 물가지수</a></nav>
@@ -46,5 +47,3 @@ export default function BasketPricePage(){
   <footer className="price-source"><b>데이터 출처</b><span>{preview?'누적 화면 확인용 샘플 데이터':displayed?.source} · 조사 평균가격이며 실제 매장 판매가격과 다를 수 있습니다.</span><a href="https://www.data.go.kr/data/15156063/openapi.do?recommendDataYn=Y" target="_blank" rel="noreferrer">공식 API 확인 →</a></footer>
  </main></div>
 }
-
-function PriceHeader(){return <header className="site-header"><a className="brand" href="/"><i>W</i><span>WonderLife<small>Everyday answers, made simple.</small></span></a><nav><a href="/#tools">계산기</a><a href="/#data" aria-current="page">생활 자료</a><a href="/links">생활 사이트</a><a href="/guides">이용 가이드</a></nav></header>}

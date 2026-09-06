@@ -1,5 +1,6 @@
 import {FormEvent,useEffect,useMemo,useState} from 'react'
 import {api,type PublicPriceResult,type PublicPriceRow} from './api'
+import SiteHeader from './SiteHeader'
 
 type Kind='period'|'regional'
 const iso=(date:Date)=>date.toISOString().slice(0,10)
@@ -15,7 +16,7 @@ export default function PublicPriceLookupPage({kind}:{kind:Kind}){
  useEffect(()=>{document.title=`${title} | WonderLife`;document.querySelector('meta[name="description"]')?.setAttribute('content',description);let canonical=document.querySelector<HTMLLinkElement>('link[rel="canonical"]');if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.appendChild(canonical)}canonical.href=window.location.origin+(regional?'/data/regional-prices':'/data/retail-price-history')},[title,description,regional])
  const search=async(event?:FormEvent)=>{event?.preventDefault();setLoading(true);setError('');try{setResult(regional?await api.regionalPrices(from,to,regionCode,itemCode):await api.periodRetailPrices(from,to,itemCode))}catch(e){setResult(null);setError(e instanceof Error?e.message:'가격 정보를 불러오지 못했습니다.')}finally{setLoading(false)}}
  const summary=useMemo(()=>{const prices=(result?.items||[]).map(x=>x.averagePrice??x.price).filter((x):x is number=>x!=null);return prices.length?{min:Math.min(...prices),avg:prices.reduce((a,b)=>a+b,0)/prices.length,max:Math.max(...prices)}:null},[result])
- return <div className="app"><header className="site-header"><a className="brand" href="/"><i>W</i><span>WonderLife<small>Everyday answers, made simple.</small></span></a><nav><a href="/#tools">계산기</a><a href="/#data" aria-current="page">생활 자료</a><a href="/links">생활 사이트</a><a href="/guides">이용 가이드</a></nav></header>
+ return <div className="app"><SiteHeader/>
  <main className="lookup-page"><a className="price-back" href="/#data">← 생활 자료</a><div className="lookup-heading"><div><p className="eyebrow">PUBLIC PRICE DATA</p><h1>{title}</h1><p>{description}</p></div><span>한국농수산식품유통공사(aT)</span></div>
  <nav className="price-api-tabs" aria-label="가격 API 메뉴"><a className={!regional?'active':''} href="/data/retail-price-history">기간별 소매가격</a><a className={regional?'active':''} href="/data/regional-prices">지역별 품목 가격</a><a href="/data/basket-price-index">장바구니 물가지수</a></nav>
  <form className="lookup-form" onSubmit={search}><label><span>시작일</span><input type="date" value={from} max={to} onChange={e=>setFrom(e.target.value)} required/></label><label><span>종료일</span><input type="date" value={to} min={from} onChange={e=>setTo(e.target.value)} required/></label>{regional&&<label><span>지역 코드</span><input value={regionCode} inputMode="numeric" onChange={e=>setRegionCode(e.target.value)} placeholder="예: 1101" required/><small>기본값 1101 · 서울</small></label>}<label><span>품목 <em>선택</em></span><select value={itemCode} onChange={e=>setItemCode(e.target.value)}>{commonItems.map(([code,name])=><option value={code} key={code}>{name}</option>)}</select></label><button disabled={loading}>{loading?'조회 중…':'가격 조회'}</button></form>
