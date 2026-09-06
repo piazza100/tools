@@ -6,6 +6,7 @@ import com.wonderlife.domain.PublicPriceRow;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -30,7 +31,7 @@ import java.util.List;
    .append("&cond%5Bexmn_ymd%3A%3AGTE%5D=").append(from.format(SOURCE_DATE)).append("&cond%5Bexmn_ymd%3A%3ALTE%5D=").append(to.format(SOURCE_DATE));
   add(url,"cond[item_cd::EQ]",itemCode);add(url,"cond[sgg_cd::EQ]",regionCode);
   try{
-   String raw=client.get().uri(URI.create(url.toString())).retrieve().body(String.class);JsonNode root=json.readTree(raw);
+   String raw=requestWithRetry(URI.create(url.toString()));JsonNode root=json.readTree(raw);
    JsonNode response=root.path("response");if(response.isMissingNode())response=root;
    JsonNode header=response.path("header");String code=header.path("resultCode").asText("0");if(!"0".equals(code)&&!"00".equals(code))throw new IllegalStateException(header.path("resultMsg").asText("공공데이터 API 오류"));
    JsonNode body=response.path("body"),items=body.path("items").path("item");List<PublicPriceRow> rows=new ArrayList<>();
@@ -38,6 +39,7 @@ import java.util.List;
    return new Result(from,to,body.path("totalCount").asInt(rows.size()),rows,"한국농수산식품유통공사(aT)");
   }catch(IllegalStateException e){throw e;}catch(Exception e){throw new IllegalStateException("가격 정보를 불러오지 못했습니다.",e);}
  }
+ private String requestWithRetry(URI uri){RestClientException last=null;for(int attempt=1;attempt<=3;attempt++)try{return client.get().uri(uri).retrieve().body(String.class);}catch(RestClientException error){last=error;if(attempt<3)try{Thread.sleep(250L*attempt);}catch(InterruptedException interrupted){Thread.currentThread().interrupt();throw new IllegalStateException("가격 조회가 중단되었습니다.",interrupted);}}throw last;}
  private static PublicPriceRow map(JsonNode r,boolean period){return new PublicPriceRow(text(r,"exmn_ymd"),text(r,"se_nm"),text(r,"ctgry_cd"),text(r,"ctgry_nm"),text(r,"item_cd"),text(r,"item_nm"),text(r,"vrty_cd"),text(r,"vrty_nm"),text(r,"grd_cd"),text(r,"grd_nm"),text(r,"sgg_cd"),text(r,"sgg_nm"),text(r,"mrkt_cd"),text(r,"mrkt_nm"),unit(r),period?decimal(r,"exmn_dd_prc"):decimal(r,"exmn_dd_avg_prc"),period?decimal(r,"exmn_dd_cnvs_prc"):decimal(r,"exmn_dd_cnvs_avg_prc"),decimal(r,"exmn_dd_min_prc"),decimal(r,"exmn_dd_avg_prc"),decimal(r,"exmn_dd_max_prc"));}
  private static void validateDates(LocalDate from,LocalDate to){if(from==null||to==null||to.isBefore(from))throw new IllegalArgumentException("조회 기간을 확인해 주세요.");if(ChronoUnit.DAYS.between(from,to)>90)throw new IllegalArgumentException("조회 기간은 최대 90일입니다.");}
  private static void add(StringBuilder url,String name,String value){if(!blank(value))url.append('&').append(URLEncoder.encode(name,StandardCharsets.UTF_8)).append('=').append(URLEncoder.encode(value.trim(),StandardCharsets.UTF_8));}
