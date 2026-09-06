@@ -11,6 +11,7 @@ import java.util.List;
  @Select("SELECT i.source_item_code item_code,i.item_name name,i.display_unit unit,1 quantity,s.original_price current_price,s.day_ago_price,s.week_ago_price,s.month_ago_price,s.year_ago_price FROM tools_daily_price_snapshots s JOIN tools_price_items i ON i.id=s.item_id WHERE s.price_date=(SELECT MAX(price_date) FROM tools_daily_price_snapshots) AND i.active=TRUE AND i.market_type='RETAIL' ORDER BY i.item_name LIMIT 30") List<PriceDashboardItem> latestItems();
  @Select("SELECT id FROM tools_price_collection_runs WHERE business_date=#{date}") Long runId(LocalDate date);
  @Select("SELECT status FROM tools_price_collection_runs WHERE id=#{id}") String runStatus(long id);
+ @Select("SELECT COUNT(*)>0 FROM tools_price_collection_runs WHERE id=#{id} AND status='RUNNING' AND started_at>=CURRENT_TIMESTAMP - INTERVAL 30 MINUTE") boolean runIsActive(long id);
  @Insert("INSERT INTO tools_price_collection_runs(business_date,status) VALUES(#{date},'RUNNING')") @Options(useGeneratedKeys=true,keyProperty="row.id") void startRun(@Param("date")LocalDate date,@Param("row")MutableId row);
  @Update("UPDATE tools_price_collection_runs SET started_at=CURRENT_TIMESTAMP,finished_at=NULL,status='RUNNING',attempt_count=attempt_count+1,forced_at=CURRENT_TIMESTAMP,item_count=0,error_message=NULL WHERE id=#{id}") void restartRun(long id);
  @Update("UPDATE tools_price_collection_runs SET finished_at=CURRENT_TIMESTAMP,status='SUCCESS',item_count=#{count},error_message=NULL WHERE id=#{id}") void finishRun(@Param("id")long id,@Param("count")int count);

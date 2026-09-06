@@ -1,0 +1,41 @@
+CREATE TABLE tools_public_price_collection_runs (
+ id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ source_type VARCHAR(24) NOT NULL,
+ business_date DATE NOT NULL,
+ status VARCHAR(16) NOT NULL,
+ started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ finished_at TIMESTAMP NULL,
+ item_count INT NOT NULL DEFAULT 0,
+ error_message VARCHAR(1000) NULL,
+ UNIQUE KEY tools_uk_public_price_run (source_type,business_date)
+);
+
+CREATE TABLE tools_public_price_history (
+ id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+ source_type VARCHAR(24) NOT NULL,
+ collected_date DATE NOT NULL,
+ price_date DATE NOT NULL,
+ market_type VARCHAR(40) NOT NULL DEFAULT '',
+ category_code VARCHAR(40) NOT NULL DEFAULT '',
+ category_name VARCHAR(100) NOT NULL DEFAULT '',
+ item_code VARCHAR(40) NOT NULL DEFAULT '',
+ item_name VARCHAR(100) NOT NULL DEFAULT '',
+ variety_code VARCHAR(40) NOT NULL DEFAULT '',
+ variety_name VARCHAR(100) NOT NULL DEFAULT '',
+ grade_code VARCHAR(40) NOT NULL DEFAULT '',
+ grade_name VARCHAR(100) NOT NULL DEFAULT '',
+ region_code VARCHAR(40) NOT NULL DEFAULT '',
+ region_name VARCHAR(100) NOT NULL DEFAULT '',
+ market_code VARCHAR(40) NOT NULL DEFAULT '',
+ market_name VARCHAR(100) NOT NULL DEFAULT '',
+ unit VARCHAR(40) NOT NULL DEFAULT '',
+ unit_size VARCHAR(40) NOT NULL DEFAULT '',
+ price DECIMAL(18,4) NULL,
+ normalized_price DECIMAL(18,4) NULL,
+ min_price DECIMAL(18,4) NULL,
+ average_price DECIMAL(18,4) NULL,
+ max_price DECIMAL(18,4) NULL,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ UNIQUE KEY tools_uk_public_price_row (source_type,price_date,market_type,item_code,variety_code,grade_code,region_code,market_code,unit,unit_size),
+ INDEX tools_idx_public_price_lookup (source_type,price_date,item_code,region_code)
+);

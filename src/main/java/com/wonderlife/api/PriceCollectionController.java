@@ -1,6 +1,6 @@
 package com.wonderlife.api;
 
-import com.wonderlife.service.PriceCollectionService;
+import com.wonderlife.service.AllPriceCollectionService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,9 +13,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 @RestController @RequestMapping("/api/internal/prices") public class PriceCollectionController{
- private final PriceCollectionService service;private final String token;
- public PriceCollectionController(PriceCollectionService service,@Value("${app.price-collection.job-token:}")String token){this.service=service;this.token=token;}
- @PostMapping("/collect") PriceCollectionService.Result collect(@RequestHeader(value="X-Price-Job-Token",required=false)String supplied,@RequestParam(defaultValue="false")boolean force){
+ private final AllPriceCollectionService service;private final String token;
+ public PriceCollectionController(AllPriceCollectionService service,@Value("${app.price-collection.job-token:}")String token){this.service=service;this.token=token;}
+ @PostMapping("/collect") AllPriceCollectionService.Result collect(@RequestHeader(value="X-Price-Job-Token",required=false)String supplied,@RequestParam(defaultValue="false")boolean force){
   if(token.isBlank()||supplied==null||!MessageDigest.isEqual(token.getBytes(StandardCharsets.UTF_8),supplied.getBytes(StandardCharsets.UTF_8)))throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
   return service.collect(force);
  }

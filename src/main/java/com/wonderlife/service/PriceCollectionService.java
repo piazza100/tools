@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter;
  public Result collect(boolean force){
   if(key.isBlank())throw new IllegalStateException("DATA_GO_KR_SERVICE_KEY is not configured");
   LocalDate businessDate=LocalDate.now(SEOUL);Long existing=mapper.runId(businessDate);
-  if(existing!=null&&!force)return new Result(existing,0,true,false,businessDate,mapper.runStatus(existing));
+  if(existing!=null&&!force){String status=mapper.runStatus(existing);if("SUCCESS".equals(status)||mapper.runIsActive(existing))return new Result(existing,0,true,false,businessDate,status);}
   var run=new PriceMapper.MutableId();
   if(existing!=null){run.id=existing;mapper.restartRun(existing);}else try{mapper.startRun(businessDate,run);}catch(DuplicateKeyException duplicate){long id=mapper.runId(businessDate);return new Result(id,0,true,false,businessDate,mapper.runStatus(id));}
   int saved=0;

@@ -27,7 +27,7 @@ export default function BasketPricePage(){
  const summary=useMemo(()=>basketSummary(items),[items])
  if(loading)return <div className="price-app"><SiteHeader/><main className="price-page"><p role="status">가격 데이터를 불러오는 중입니다…</p></main></div>
  return <div className="price-app"><SiteHeader/><main className="price-page">
-  <a className="price-back" href="/">← WonderLife 홈</a>
+  <a className="price-back" href="/#data">← 생활 자료</a>
   <section className="price-hero"><div><p className="eyebrow">MY BASKET PRICE INDEX</p><h1>내 장바구니 물가는<br/><em>얼마나 달라졌을까요?</em></h1><p>매일 수집한 가격으로 자주 사는 품목의 변화를 한눈에 확인합니다.</p></div><div className="price-total"><small>{preview?'90일 누적 후 예상 화면':'오늘의 장바구니'}</small><strong>{won.format(summary.total)}</strong><span className={(summary.monthRate||0)>0?'up':'down'}>한 달 전보다 {rate(summary.monthRate)}</span></div></section>
   <nav className="price-api-tabs" aria-label="가격 API 메뉴"><a href="/data/retail-price-history">기간별 소매가격</a><a href="/data/regional-prices">지역별 품목 가격</a><a className="active" href="/data/basket-price-index" aria-current="page">장바구니 물가지수</a></nav>
   <div className={`price-preview-notice${preview?' active':''}`} role="status"><div><b>{preview?'누적 데이터 샘플을 보는 중입니다':'아직 일별 데이터가 충분히 쌓이지 않았습니다'}</b><span>{preview?'아래 수치와 차트는 화면 구성을 보여주기 위한 예시이며 실제 가격이 아닙니다.':'90일간 데이터가 쌓였을 때 표시될 통계와 차트를 미리 확인할 수 있습니다.'}</span></div><button type="button" onClick={()=>setPreview(value=>!value)}>{preview?'실제 데이터로 돌아가기':'90일 누적 화면 미리보기'}</button></div>

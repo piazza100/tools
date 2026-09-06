@@ -53,7 +53,9 @@ export default {
     const token=String(env.PRICE_COLLECTION_JOB_TOKEN||'')
     if(!apiOrigin||!token)throw new Error('Price collection cron is not configured')
     ctx.waitUntil(fetch(`${apiOrigin}/api/internal/prices/collect`,{method:'POST',headers:{'X-Price-Job-Token':token}}).then(async response=>{
-      if(!response.ok)throw new Error(`Price collection failed: ${response.status} ${await response.text()}`)
+      const body=await response.text()
+      if(!response.ok)throw new Error(`Price collection failed: ${response.status} ${body}`)
+      try{if(JSON.parse(body).success===false)throw new Error(`Price collection partially failed: ${body}`)}catch(error){if(error instanceof SyntaxError)return;throw error}
     }))
   },
 }

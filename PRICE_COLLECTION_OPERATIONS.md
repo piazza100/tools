@@ -63,7 +63,13 @@ Cloudflare Worker의 Cron Trigger는 [frontend/wrangler.jsonc](frontend/wrangler
 
 Cloudflare Cron은 UTC를 사용한다. `21:30 UTC`는 한국시간으로 다음 날 `06:30 KST`다.
 
-프런트 Worker를 정상 배포하면 `scheduled()` 핸들러가 매일 Render의 수집 엔드포인트를 호출한다. 기본 호출은 같은 서울 달력 날짜에 실행 기록이 있으면 aT API를 다시 호출하지 않는다.
+프런트 Worker를 정상 배포하면 `scheduled()` 핸들러가 매일 Render의 통합 수집 엔드포인트를 호출한다. 한 번의 배치에서 최근 도·소매가격, 기간별 소매가격, 22개 지역별 품목가격을 차례로 저장한다. 기간별·지역별 API는 최근 7일을 다시 조회해 휴일과 일시 장애로 누락된 조사일도 보완한다. 화면 조회는 외부 API를 직접 호출하지 않고 WonderLife DB만 사용한다.
+
+배포 후 세 수집원의 오늘 실행 상태는 다음 공개 상태 API에서 확인할 수 있다.
+
+```text
+GET /api/public/prices/collection-status
+```
 
 ## 수동 실행
 
@@ -219,4 +225,3 @@ Flyway 마이그레이션 `V3__create_daily_price_snapshots.sql`이 다음 테�
 - 실패했다고 기존 정상 가격 데이터를 삭제하지 않는다.
 - 화면에는 가격 기준일과 조사 평균가격이라는 점을 표시한다.
 - 조사 평균가격은 실제 매장 판매가격과 다를 수 있다.
-
