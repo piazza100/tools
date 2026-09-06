@@ -1,0 +1,16 @@
+.scientific-display input {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  outline: none;
+  font: 500 clamp(30px, 7vw, 54px) Manrope;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scientific-display input:focus { box-shadow: none; }

@@ -7,11 +7,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.Duration;
 
 @Service public class PriceCollectionService{
  private static final ZoneId SEOUL=ZoneId.of("Asia/Seoul");
@@ -19,7 +21,7 @@ import java.time.format.DateTimeFormatter;
  private final PriceMapper mapper;private final ObjectMapper json;private final RestClient client;private final String key;private final String endpoint;private final int pageSize;
  public PriceCollectionService(PriceMapper mapper,ObjectMapper json,RestClient.Builder builder,
   @Value("${app.price-collection.service-key:}")String key,@Value("${app.price-collection.endpoint}")String endpoint,
-  @Value("${app.price-collection.page-size:500}")int pageSize){this.mapper=mapper;this.json=json;this.client=builder.build();this.key=key;this.endpoint=endpoint;this.pageSize=pageSize;}
+  @Value("${app.price-collection.page-size:500}")int pageSize){this.mapper=mapper;this.json=json;var requestFactory=new JdkClientHttpRequestFactory();requestFactory.setReadTimeout(Duration.ofSeconds(20));this.client=builder.requestFactory(requestFactory).build();this.key=key;this.endpoint=endpoint;this.pageSize=pageSize;}
 
  public Result collect(boolean force){
   if(key.isBlank())throw new IllegalStateException("DATA_GO_KR_SERVICE_KEY is not configured");

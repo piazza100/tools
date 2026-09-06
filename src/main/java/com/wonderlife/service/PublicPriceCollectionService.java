@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +25,7 @@ import java.util.List;
  private static final ZoneId SEOUL=ZoneId.of("Asia/Seoul");private static final DateTimeFormatter SOURCE_DATE=DateTimeFormatter.BASIC_ISO_DATE;
  private static final List<String> REGIONS=List.of("1101","2300","3111","3138","3145","3112","3211","3214","2501","3411","2701","3311","2401","3613","3511","2200","3711","3714","3814","2100","2601","3911");
  private final PublicPriceStorageMapper mapper;private final ObjectMapper json;private final RestClient client;private final String key;private final String periodEndpoint;private final String regionEndpoint;
- public PublicPriceCollectionService(PublicPriceStorageMapper mapper,ObjectMapper json,RestClient.Builder builder,@Value("${app.price-collection.service-key:}")String key,@Value("${app.price-lookup.period-endpoint}")String periodEndpoint,@Value("${app.price-lookup.region-endpoint}")String regionEndpoint){this.mapper=mapper;this.json=json;this.client=builder.build();this.key=key;this.periodEndpoint=periodEndpoint;this.regionEndpoint=regionEndpoint;}
+ public PublicPriceCollectionService(PublicPriceStorageMapper mapper,ObjectMapper json,RestClient.Builder builder,@Value("${app.price-collection.service-key:}")String key,@Value("${app.price-lookup.period-endpoint}")String periodEndpoint,@Value("${app.price-lookup.region-endpoint}")String regionEndpoint){this.mapper=mapper;this.json=json;var requestFactory=new JdkClientHttpRequestFactory();requestFactory.setReadTimeout(Duration.ofSeconds(20));this.client=builder.requestFactory(requestFactory).build();this.key=key;this.periodEndpoint=periodEndpoint;this.regionEndpoint=regionEndpoint;}
  public Results collect(boolean force){if(key.isBlank())return new Results(failed(PERIOD,"DATA_GO_KR_SERVICE_KEY is not configured"),failed(REGIONAL,"DATA_GO_KR_SERVICE_KEY is not configured"));LocalDate date=LocalDate.now(SEOUL),from=date.minusDays(7);return new Results(safely(()->collectSource(PERIOD,periodEndpoint,date,from,date,List.of(""),force),PERIOD,date),safely(()->collectSource(REGIONAL,regionEndpoint,date,from,date,REGIONS,force),REGIONAL,date));}
  private Result collectSource(String source,String endpoint,LocalDate businessDate,LocalDate from,LocalDate to,List<String> regions,boolean force){String status=mapper.runStatus(source,businessDate);if(!force&&("SUCCESS".equals(status)||mapper.runIsActive(source,businessDate)))return new Result(source,businessDate,0,true,status);mapper.startRun(source,businessDate);int saved=0;try{for(String region:regions)saved+=collectPages(source,endpoint,businessDate,from,to,region);mapper.finishRun(source,businessDate,saved);return new Result(source,businessDate,saved,false,"SUCCESS");}catch(Exception error){mapper.failRun(source,businessDate,truncate(error.getMessage()));throw new IllegalStateException(source+" price collection failed",error);}}
  private int collectPages(String source,String endpoint,LocalDate collectedDate,LocalDate from,LocalDate to,String region)throws Exception{int page=1,total=Integer.MAX_VALUE,saved=0;while((page-1)*1000<total){StringBuilder url=new StringBuilder(endpoint).append("?serviceKey=").append(key).append("&returnType=json&pageNo=").append(page).append("&numOfRows=1000");add(url,"cond[exmn_ymd::GTE]",from.format(SOURCE_DATE));add(url,"cond[exmn_ymd::LTE]",to.format(SOURCE_DATE));add(url,"cond[sgg_cd::EQ]",region);JsonNode root=json.readTree(requestWithRetry(URI.create(url.toString()))),response=root.path("response");if(response.isMissingNode())response=root;JsonNode header=response.path("header");String code=header.path("resultCode").asText("0");if(!"0".equals(code)&&!"00".equals(code))throw new IllegalStateException(header.path("resultMsg").asText("공공데이터 API 오류"));JsonNode body=response.path("body"),items=body.path("items").path("item");total=body.path("totalCount").asInt(0);List<StoredPublicPriceRow> batch=new ArrayList<>();if(items.isArray())for(JsonNode row:items)batch.add(map(source,collectedDate,row));for(int start=0;start<batch.size();start+=200){mapper.upsertBatch(batch.subList(start,Math.min(start+200,batch.size())));}saved+=batch.size();page++;}return saved;}

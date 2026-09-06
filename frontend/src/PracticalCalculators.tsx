@@ -2,6 +2,7 @@ import {useEffect,useState,type ReactNode} from 'react'
 import {addCalendar,binomialProbability,bmi,combination,compoundInvestment,currencyConversion,electricityCost,gradeAverage,installment,permutation,scientific,splitBill,workPay} from './practicalCalculations'
 import {num,won} from './calculations'
 import {focusNumericInput} from './numericInput'
+import ScientificCalculator from './ScientificCalculator'
 
 type Props={id:string;title:string;restoreInput?:Record<string,unknown>|null;onCalculated:(title:string,input:unknown,result:unknown)=>void}
 type Values=Record<string,string>
@@ -22,6 +23,7 @@ export default function PracticalCalculator({id,title,restoreInput,onCalculated}
  const [v,setV]=useState<Values>(()=>({...defaults[id]})),[result,setResult]=useState<CalcResult|null>(null),[error,setError]=useState('')
  useEffect(()=>{setV({...defaults[id]});setResult(null);setError('')},[id])
  useEffect(()=>{if(restoreInput?._calculatorType===id)setV({...defaults[id],...Object.fromEntries(Object.entries(restoreInput).filter(([k])=>!k.startsWith('_')).map(([k,x])=>[k,String(x??'')]))})},[restoreInput,id])
+ if(id==='scientific')return <ScientificCalculator title={title} restoreInput={restoreInput} onCalculated={onCalculated}/>
  const set=(key:string)=>(value:string)=>setV(old=>({...old,[key]:value}))
  const field=(key:string,label:string)=><Field label={label} value={v[key]} onChange={set(key)}/>
  const calculate=()=>{try{let r:CalcResult
