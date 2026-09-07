@@ -12,5 +12,7 @@ import java.time.LocalDate;
  @GetMapping("/regional") PublicPriceLookupService.Result regional(@RequestParam LocalDate from,@RequestParam LocalDate to,@RequestParam String regionCode,@RequestParam(required=false)String itemCode){return call(()->service.region(from,to,itemCode,regionCode));}
  @GetMapping("/period-retail/items") Object periodItems(){return service.periodItems();}
  @GetMapping("/regional/items") Object regionalItems(){return service.regionalItems();}
+ @GetMapping("/period-retail/statistics") Object periodStatistics(@RequestParam LocalDate from,@RequestParam LocalDate to,@RequestParam String itemCode){return call(()->service.periodStatistics(from,to,itemCode));}
+ @GetMapping("/regional/statistics") Object regionalStatistics(@RequestParam LocalDate from,@RequestParam LocalDate to,@RequestParam String itemCode){return call(()->service.regionalStatistics(from,to,itemCode));}
  private static <T>T call(java.util.function.Supplier<T> action){try{return action.get();}catch(IllegalArgumentException e){throw new ResponseStatusException(HttpStatus.BAD_REQUEST,e.getMessage(),e);}catch(IllegalStateException e){throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,e.getMessage(),e);}}
 }
