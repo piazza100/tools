@@ -5,8 +5,10 @@ describe('scientific expression parser',()=>{
  it.each([
   ['2+3*4',14],['(2+3)*4',20],['2^3^2',512],['5!',120],['sqrt(81)',9],['abs(-7)',7],['log(1000)',3],['ln(e)',1],['2.5e2+1',251],['10%3',1]
  ])('evaluates %s', (expression,expected)=>expect(scientific(expression as string)).toBeCloseTo(expected as number,10))
- it('supports degrees and radians',()=>{expect(scientific('sin(30)','deg')).toBeCloseTo(.5);expect(scientific('cos(pi)','rad')).toBeCloseTo(-1);expect(scientific('asin(0.5)','deg')).toBeCloseTo(30)})
- it.each(['','2+','sqrt(-1)','1/0','171!','unknown(1)','(2+3'])('rejects invalid expression %s',expression=>expect(()=>scientific(expression)).toThrow())
+ it('supports all trigonometric functions in degrees and radians',()=>{expect(scientific('sin(30)','deg')).toBeCloseTo(.5);expect(scientific('cos(60)','deg')).toBeCloseTo(.5);expect(scientific('tan(45)','deg')).toBeCloseTo(1);expect(scientific('sin(pi/2)','rad')).toBeCloseTo(1);expect(scientific('cos(pi)','rad')).toBeCloseTo(-1);expect(scientific('tan(pi/4)','rad')).toBeCloseTo(1)})
+ it('supports inverse trigonometric functions in both angle modes',()=>{expect(scientific('asin(0.5)','deg')).toBeCloseTo(30);expect(scientific('acos(0.5)','deg')).toBeCloseTo(60);expect(scientific('atan(1)','deg')).toBeCloseTo(45);expect(scientific('asin(1)','rad')).toBeCloseTo(Math.PI/2)})
+ it('supports constants, exponential, unary signs, powers, and chained factorials',()=>{expect(scientific('exp(1)')).toBeCloseTo(Math.E);expect(scientific('-(-3)')).toBe(3);expect(scientific('2^-2')).toBe(.25);expect(scientific('3!!')).toBe(720)})
+ it.each(['','2+','sqrt(-1)','log(0)','asin(2)','tan(90)','tan(pi/2)','1/0','171!','2.5!','unknown(1)','(2+3'])('rejects invalid expression %s',expression=>expect(()=>scientific(expression,expression.includes('pi')?'rad':'deg')).toThrow())
 })
 
 describe('money and everyday calculations',()=>{

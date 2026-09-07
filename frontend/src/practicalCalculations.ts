@@ -28,7 +28,7 @@ export function scientific(expression:string,angle:AngleMode='deg'){
   if(name==='e')return Math.E
   if(source[index++]!=='(')fail()
   const value=sum();if(source[index++]!==')')fail()
-  const functions:Record<string,(x:number)=>number>={sin:x=>Math.sin(angleIn(x)),cos:x=>Math.cos(angleIn(x)),tan:x=>Math.tan(angleIn(x)),asin:x=>angleOut(Math.asin(x)),acos:x=>angleOut(Math.acos(x)),atan:x=>angleOut(Math.atan(x)),sqrt:Math.sqrt,abs:Math.abs,ln:Math.log,log:Math.log10,exp:Math.exp}
+  const functions:Record<string,(x:number)=>number>={sin:x=>Math.sin(angleIn(x)),cos:x=>Math.cos(angleIn(x)),tan:x=>{const radians=angleIn(x);if(Math.abs(Math.cos(radians))<1e-12)throw new Error('탄젠트를 계산할 수 없는 각도입니다.');return Math.tan(radians)},asin:x=>angleOut(Math.asin(x)),acos:x=>angleOut(Math.acos(x)),atan:x=>angleOut(Math.atan(x)),sqrt:Math.sqrt,abs:Math.abs,ln:Math.log,log:Math.log10,exp:Math.exp}
   if(!functions[name])fail()
   return functions[name]!(value)
  }

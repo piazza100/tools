@@ -12,9 +12,9 @@ const keys=[
  ['7','8','9','x²','−'],
  ['4','5','6','1/x','+'],
  ['1','2','3','!','='],
- ['0','0','.','±','='],
+ ['0','exp','.','±','='],
 ]
-const token:Record<string,string>={'abs':'abs(','sin':'sin(','cos':'cos(','tan':'tan(','sin⁻¹':'asin(','cos⁻¹':'acos(','tan⁻¹':'atan(','√':'sqrt(','ln':'ln(','log':'log(','π':'pi','xʸ':'^','x²':'^2','1/x':'1/','×':'*','÷':'/','−':'-'}
+const token:Record<string,string>={'abs':'abs(','sin':'sin(','cos':'cos(','tan':'tan(','sin⁻¹':'asin(','cos⁻¹':'acos(','tan⁻¹':'atan(','√':'sqrt(','ln':'ln(','log':'log(','exp':'exp(','π':'pi','xʸ':'^','x²':'^2','×':'*','÷':'/','−':'-'}
 
 export default function ScientificCalculator({title,restoreInput,onCalculated}:Props){
  const [expression,setExpression]=useState(''),[display,setDisplay]=useState('0'),[angle,setAngle]=useState<AngleMode>('deg'),[error,setError]=useState('')
@@ -24,7 +24,8 @@ export default function ScientificCalculator({title,restoreInput,onCalculated}:P
   if(key==='='){evaluate();return}
   if(key==='AC'){setExpression('');setDisplay('0');setError('');return}
   if(key==='⌫'){const next=expression.slice(0,-1);setExpression(next);setDisplay(next||'0');return}
-  if(key==='±'){const next=expression.startsWith('-')?expression.slice(1):`-${expression}`;setExpression(next);setDisplay(next||'0');return}
+  if(key==='±'){const next=expression.startsWith('-(')&&expression.endsWith(')')?expression.slice(2,-1):expression?`-(${expression})`:'-';setExpression(next);setDisplay(next||'0');return}
+  if(key==='1/x'){const next=expression?`1/(${expression})`:'1/(';setExpression(next);setDisplay(next);return}
   const next=expression+(token[key]??key);setExpression(next);setDisplay(next)
  }
  return <div className="scientific-calculator">
