@@ -100,7 +100,7 @@ function Calculator({id,onCalculated,restoreInput,member=sessionStorage.getItem(
  if(id==='housingPlan')return <><HousingPlanCalculator onCalculated={onCalculated} restoreInput={restoreInput?._calculatorType==='housingPlan'?restoreInput:null}/><CalculatorEditorial id={id}/></>
  if(id==='apartmentPurchase')return <><ApartmentPurchaseCalculator onCalculated={onCalculated} restoreInput={restoreInput?._calculatorType==='apartmentPurchase'?restoreInput:null}/><CalculatorEditorial id={id}/></>
  if(id==='fundingSource')return <><FundingSourceCalculator onCalculated={onCalculated} restoreInput={restoreInput?._calculatorType==='fundingSource'?restoreInput:null}/><CalculatorEditorial id={id}/></>
- if(practicalIds.includes(id))return <><PracticalCalculator id={id} title={tools.find(x=>x.id===id)!.title} onCalculated={onCalculated} restoreInput={restoreInput}/><CalculatorEditorial id={id}/></>
+ if(practicalIds.includes(id))return <><PracticalCalculator key={id} id={id} title={tools.find(x=>x.id===id)!.title} onCalculated={onCalculated} restoreInput={restoreInput}/><CalculatorEditorial id={id}/></>
  if(['capacity','budget','rentCompare','prepayment','retirement','parentalLeave','carCost','moving'].includes(id))return <><AdvancedCalculator id={id} title={tools.find(x=>x.id===id)!.title} onCalculated={onCalculated} restoreInput={restoreInput} member={member} onNavigate={onNavigate}/><CalculatorEditorial id={id}/></>
  const calculate=()=>{
   const empty=(value:string)=>!value.trim()

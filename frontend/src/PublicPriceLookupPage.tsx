@@ -1,27 +1,28 @@
 import {FormEvent,useEffect,useMemo,useState} from 'react'
-import {api,type PublicPriceResult,type PublicPriceRow} from './api'
+import {api,type PublicPriceItemOption,type PublicPriceResult,type PublicPriceRow} from './api'
 import SiteHeader from './SiteHeader'
 
 type Kind='period'|'regional'
 const iso=(date:Date)=>date.toISOString().slice(0,10)
 const won=(value:number|null)=>value==null?'—':`${Math.round(value).toLocaleString('ko-KR')}원`
 const displayDate=(value:string)=>/^\d{8}$/.test(value)?`${value.slice(0,4)}-${value.slice(4,6)}-${value.slice(6)}`:value
-const commonItems=[['','전체 품목'],['111','쌀'],['112','찹쌀'],['141','콩'],['142','팥'],['143','녹두'],['151','고구마'],['152','감자'],['211','배추'],['212','양배추'],['213','시금치'],['214','상추'],['215','얼갈이배추'],['221','수박'],['222','참외'],['223','오이'],['224','호박'],['225','토마토'],['231','무']]
 const regions=[['1101','서울'],['2300','인천'],['3111','수원'],['3138','고양'],['3145','용인'],['3112','성남'],['3211','춘천'],['3214','강릉'],['2501','대전'],['3411','천안'],['2701','세종'],['3311','청주'],['2401','광주'],['3613','순천'],['3511','전주'],['2200','대구'],['3711','포항'],['3714','안동'],['3814','창원'],['2100','부산'],['2601','울산'],['3911','제주']]
 
 export default function PublicPriceLookupPage({kind}:{kind:Kind}){
  const today=new Date(),weekAgo=new Date(today);weekAgo.setDate(today.getDate()-7)
  const [from,setFrom]=useState(iso(weekAgo)),[to,setTo]=useState(iso(today)),[itemCode,setItemCode]=useState(''),[regionCode,setRegionCode]=useState('1101')
+ const [itemOptions,setItemOptions]=useState<PublicPriceItemOption[]>([]),[itemsLoading,setItemsLoading]=useState(true)
  const [result,setResult]=useState<PublicPriceResult|null>(null),[loading,setLoading]=useState(false),[error,setError]=useState('')
  const regional=kind==='regional',title=regional?'지역별 품목 가격':'기간별 소매가격',description=regional?'같은 품목의 지역 조사 최저·평균·최고 가격을 확인합니다.':'원하는 기간의 시장별 소매가격 흐름을 확인합니다.'
  useEffect(()=>{document.title=`${title} | WonderLife`;document.querySelector('meta[name="description"]')?.setAttribute('content',description);let canonical=document.querySelector<HTMLLinkElement>('link[rel="canonical"]');if(!canonical){canonical=document.createElement('link');canonical.rel='canonical';document.head.appendChild(canonical)}canonical.href=window.location.origin+(regional?'/data/regional-prices':'/data/retail-price-history')},[title,description,regional])
+ useEffect(()=>{let active=true;setItemsLoading(true);(regional?api.regionalPriceItems():api.periodRetailPriceItems()).then(items=>{if(active){setItemOptions(items);if(itemCode&&!items.some(item=>item.itemCode===itemCode))setItemCode('')}}).catch(()=>{if(active)setItemOptions([])}).finally(()=>{if(active)setItemsLoading(false)});return()=>{active=false}},[regional])
  const search=async(event?:FormEvent)=>{event?.preventDefault();setLoading(true);setError('');try{setResult(regional?await api.regionalPrices(from,to,regionCode,itemCode):await api.periodRetailPrices(from,to,itemCode))}catch(e){setResult(null);setError(e instanceof Error?e.message:'가격 정보를 불러오지 못했습니다.')}finally{setLoading(false)}}
  const summary=useMemo(()=>{const prices=(result?.items||[]).map(x=>x.averagePrice??x.price).filter((x):x is number=>x!=null);return prices.length?{min:Math.min(...prices),avg:prices.reduce((a,b)=>a+b,0)/prices.length,max:Math.max(...prices)}:null},[result])
  const summaryTitle=regional?'22개 지역':'최대 90일',summaryText=regional?'지역별 가격을 매일 저장합니다':'저장된 소매가격을 기간별로 조회합니다'
  return <div className="app"><SiteHeader/>
  <main className="lookup-page"><a className="price-back" href="/#data">← 생활 자료</a><section className="price-hero"><div><p className="eyebrow">PUBLIC PRICE DATA</p><h1>{title}</h1><p>{description}</p></div><div className="price-total lookup-summary"><small>매일 저장된 가격</small><strong>{summaryTitle}</strong><span>{summaryText}</span></div></section>
  <nav className="price-api-tabs" aria-label="가격 API 메뉴"><a className={!regional?'active':''} href="/data/retail-price-history">기간별 소매가격</a><a className={regional?'active':''} href="/data/regional-prices">지역별 품목 가격</a><a href="/data/basket-price-index">장바구니 물가지수</a></nav>
- <form className="lookup-form" onSubmit={search}><label><span>시작일</span><input type="date" value={from} max={to} onChange={e=>setFrom(e.target.value)} required/></label><label><span>종료일</span><input type="date" value={to} min={from} onChange={e=>setTo(e.target.value)} required/></label>{regional&&<label><span>지역</span><select value={regionCode} onChange={e=>setRegionCode(e.target.value)} required>{regions.map(([code,name])=><option value={code} key={code}>{name}</option>)}</select></label>}<label><span>품목 <em>선택</em></span><select value={itemCode} onChange={e=>setItemCode(e.target.value)}>{commonItems.map(([code,name])=><option value={code} key={code}>{name}</option>)}</select></label><button disabled={loading}>{loading?'조회 중…':'가격 조회'}</button></form>
+ <form className="lookup-form" onSubmit={search}><label><span>시작일</span><input type="date" value={from} max={to} onChange={e=>setFrom(e.target.value)} required/></label><label><span>종료일</span><input type="date" value={to} min={from} onChange={e=>setTo(e.target.value)} required/></label>{regional&&<label><span>지역</span><select value={regionCode} onChange={e=>setRegionCode(e.target.value)} required>{regions.map(([code,name])=><option value={code} key={code}>{name}</option>)}</select></label>}<label><span>품목 <em>선택</em></span><select value={itemCode} onChange={e=>setItemCode(e.target.value)} disabled={itemsLoading}><option value="">{itemsLoading?'품목 불러오는 중…':'전체 품목'}</option>{itemOptions.map(item=><option value={item.itemCode} key={item.itemCode}>{item.itemName||item.itemCode}</option>)}</select></label><button disabled={loading}>{loading?'조회 중…':'가격 조회'}</button></form>
  <p className="lookup-help">WonderLife가 매일 저장한 가격에서 최대 90일까지 조회합니다. 전체 품목은 최대 500건 표시합니다.</p>
  {error&&<div className="lookup-message error"><b>조회하지 못했습니다.</b><span>{error} API 승인 직후라면 잠시 뒤 다시 시도해 주세요.</span></div>}
  {!result&&!error&&<div className="lookup-message"><b>조건을 선택하고 가격 조회를 눌러주세요.</b><span>외부 API를 다시 호출하지 않고 매일 저장된 WonderLife 데이터를 조회합니다.</span></div>}

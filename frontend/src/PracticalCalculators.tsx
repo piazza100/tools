@@ -14,7 +14,7 @@ const defaults:Record<string,Values>={
  grade:{credits:'3,3,2',grades:'4.5,4.0,3.5'},probability:{n:'10',r:'3',p:'0.5',mode:'combination'}
 }
 const n=(v:string)=>Number(v.replaceAll(',',''))
-const grouped=(value:string)=>{const raw=value.replaceAll(',','').replace(/[^0-9.-]/g,'');if(!raw)return'';const [a,b]=raw.split('.');return Number(a||0).toLocaleString('ko-KR')+(raw.includes('.')?'.'+(b??''):'')}
+const grouped=(value:string|undefined)=>{const raw=(value??'').replaceAll(',','').replace(/[^0-9.-]/g,'');if(!raw)return'';const [a,b]=raw.split('.');return Number(a||0).toLocaleString('ko-KR')+(raw.includes('.')?'.'+(b??''):'')}
 function Field({label,value,onChange,type='number',children,full=false}:{label:string;value:string;onChange:(v:string)=>void;type?:string;children?:ReactNode;full?:boolean}){const numeric=type==='number';return <label className={`field${full?' full':''}`}><span>{label}</span>{children||<input type={numeric?'text':type} inputMode={numeric?'decimal':undefined} value={numeric?grouped(value):value} onFocus={numeric?e=>focusNumericInput(value,()=>onChange(''),e):undefined} onChange={e=>onChange(numeric?grouped(e.target.value):e.target.value)}/>}</label>}
 function Select({label,value,onChange,options}:{label:string;value:string;onChange:(v:string)=>void;options:[string,string][]}){return <Field label={label} value={value} onChange={onChange}><select value={value} onChange={e=>onChange(e.target.value)}>{options.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></Field>}
 
