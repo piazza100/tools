@@ -1,4 +1,5 @@
 spring:
+  task.scheduling.pool.size: 2
   config:
     import: optional:file:.env.local[.properties]
   profiles.default: local
@@ -37,6 +38,11 @@ server:
     cookie.max-age: 30d
 management.endpoints.web.exposure.include: health,info
 app:
+  education:
+    batch-enabled: ${EDUCATION_BATCH_ENABLED:true}
+    school-chunk: ${EDUCATION_SCHOOL_CHUNK:50}
+    disclosure-chunk: ${EDUCATION_DISCLOSURE_CHUNK:30}
+    chunk-delay-ms: ${EDUCATION_CHUNK_DELAY_MS:60000}
   cors.allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
   price-collection:
@@ -47,3 +53,9 @@ app:
   price-lookup:
     period-endpoint: https://apis.data.go.kr/B552845/periodRetail/price
     region-endpoint: https://apis.data.go.kr/B552845/perRegion/price
+  neis:
+    api-key: ${NEIS_API_KEY:}
+    endpoint: https://open.neis.go.kr/hub
+  schoolinfo:
+    api-key: ${SCHOOLINFO_API_KEY:}
+    endpoint: https://www.schoolinfo.go.kr/openApi.do

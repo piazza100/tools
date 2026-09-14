@@ -45,6 +45,17 @@
 - The cron calls `POST /api/internal/prices/collect`. A repeated normal call on the same Seoul calendar date returns `alreadyCollected: true` without calling the public data API.
 - An administrator can intentionally recollect the day with `POST /api/internal/prices/collect?force=true`. Forced collection replaces the raw response pages and upserts the same source-date snapshots.
 
+### Education statistics collection
+
+- Configure `NEIS_API_KEY` and `SCHOOLINFO_API_KEY` only in deployment secrets or a local ignored `.env.local` file.
+- The daily cron calls `POST /api/internal/education/collect` with `X-Price-Job-Token` and stores results in MySQL before public screens read them.
+- NEIS school master data is refreshed once per Seoul calendar day. Meals and schedules use resumable short server-side chunks (maximum 50 schools), per-school freshness and missed-date catch-up.
+- SchoolInfo uses a resumable queue across all configured disclosure types, official city/county/district codes, school kinds, and the latest three publication years (maximum 30 scopes per chunk).
+- Public routes are `/api/public/education/summary`, `/daily-summary`, `/disclosure-summary`, `/schools?name=...`, and `/schools/{office}/{school}`. UI pages are `/data/education`, `/data/education/schools`, `/data/education/regions`, `/data/education/meals-schedules`, and `/data/education/collection-status`.
+- Education content pages have independent titles, descriptions, canonical URLs, navigation, and sitemap entries. The operational collection-status page is `noindex, follow`, excluded from the sitemap, and does not load the AdSense script in production responses.
+- See `EDUCATION_COLLECTION_OPERATIONS.md` for continuous batch scheduling, operating requirements and data completeness limits.
+- Collection progress is persisted in `tools_neis_daily_batch_state` and `tools_schoolinfo_batch_state`; reruns continue at the saved offset.
+
 ### 1. Render backend
 
 - PixelLife와 동일하게 저장소 루트의 `Dockerfile`을 사용하는 Docker Web Service로 생성합니다.

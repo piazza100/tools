@@ -16,5 +16,8 @@ describe('sitemap paths',()=>{
   '/calculators/exchange-card-fee', '/calculators/gpa-calculator',
   '/calculators/probability-combination', '/guides/salary-take-home',
   '/guides/loan-repayment', '/guides/minimum-wage',
+  '/data/education', '/data/education/schools', '/data/education/regions',
+  '/data/education/meals-schedules', '/data/education/trends', '/data/education/disclosures',
  ])('includes %s',path=>expect(INDEXABLE_PATHS).toContain(path))
+ it('excludes operational collection status from search sitemap',()=>expect(INDEXABLE_PATHS).not.toContain('/data/education/collection-status'))
 })
