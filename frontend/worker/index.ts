@@ -27,6 +27,7 @@ export default {
     if (!isApiRequest(incoming.pathname)) {
       const response = await env.ASSETS.fetch(request)
       const educationMeta:Record<string,[string,string]>={
+        '/guides/education-statistics':['교육 통계 읽는 법','학교 수·학생 수·학급 밀도와 동일 학교 증감률을 해석하는 방법을 계산 예제로 확인하세요.'],
         '/data/education':['대한민국 교육·학교 통계','전국 학교, 지역별 학생·학급 현황, 급식과 학사일정을 공식 데이터로 확인하세요.'],
         '/data/education/schools':['전국 학교 검색과 학교별 통계','학교명을 검색해 기본정보, 학생·교원·학급 지표, 급식과 학사일정을 확인하세요.'],
         '/data/education/regions':['지역별 학생 수·학교 수 비교','시도별 학생 수, 학교 수와 학급당 학생 수를 연도별로 비교하세요.'],
