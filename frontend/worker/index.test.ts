@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {renderGuide} from './index'
+import {isIndexedCalculatorPath,renderCalculator,renderGuide} from './index'
 
 describe('guide pre-rendering',()=>{
   it('renders substantive guide content into the initial HTML response',()=>{
@@ -12,5 +12,17 @@ describe('guide pre-rendering',()=>{
 
   it('does not manufacture content for an unknown guide URL',()=>{
     expect(renderGuide('not-a-guide')).toBeNull()
+  })
+
+  it('pre-renders substantive content for a core calculator',()=>{
+    const rendered=renderCalculator('/calculators/monthly-budget')
+    expect(rendered?.html).toContain('월급으로 예산과 저축 목표 세우기')
+    expect(rendered?.html).toContain('월 실수령액 320만원')
+  })
+
+  it('leaves a thin auxiliary calculator out of pre-rendering',()=>{
+    expect(renderCalculator('/calculators/random-picker')).toBeNull()
+    expect(isIndexedCalculatorPath('/calculators/random-picker')).toBe(false)
+    expect(isIndexedCalculatorPath('/calculators/monthly-budget')).toBe(true)
   })
 })

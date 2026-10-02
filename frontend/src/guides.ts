@@ -1,4 +1,34 @@
 export type Guide={slug:string;category:string;title:string;summary:string;calculatorPath?:string;sections:{title:string;paragraphs:string[]}[];faq:{q:string;a:string}[]}
+export type GuideSource={label:string;url:string;note:string}
+
+export const guideSources:Record<string,GuideSource[]>={
+ 'salary-take-home':[
+  {label:'국세청 홈택스',url:'https://www.hometax.go.kr/',note:'근로소득 간이세액표와 원천징수 기준 확인'},
+  {label:'국민연금공단',url:'https://www.nps.or.kr/',note:'기준소득월액과 보험료율 확인'},
+  {label:'국민건강보험공단',url:'https://www.nhis.or.kr/',note:'건강보험·장기요양보험 요율 확인'}],
+ 'loan-repayment':[{label:'금융감독원 금융상품 한눈에',url:'https://finlife.fss.or.kr/',note:'실제 금융상품 금리와 조건 비교'}],
+ 'minimum-wage':[{label:'최저임금위원회',url:'https://www.minimumwage.go.kr/',note:'연도별 최저임금 고시와 제도 안내'}],
+ 'date-difference':[{label:'국가법령정보센터',url:'https://www.law.go.kr/',note:'법령상 기간 계산이 필요한 경우 적용 규정 확인'}],
+ 'unit-conversion':[{label:'국가기술표준원',url:'https://www.kats.go.kr/',note:'법정계량단위와 표준 안내'}],
+ 'travel-expense':[{label:'한국소비자원',url:'https://www.kca.go.kr/',note:'여행·숙박 소비자 정보와 분쟁 기준 확인'}],
+ 'business-days':[{label:'국가법령정보센터',url:'https://www.law.go.kr/',note:'관공서의 공휴일에 관한 규정 확인'}],
+ 'savings-interest':[{label:'금융감독원 금융상품 한눈에',url:'https://finlife.fss.or.kr/',note:'예·적금 실제 금리와 우대조건 비교'}],
+ 'part-time-insurance':[
+  {label:'고용노동부',url:'https://www.moel.go.kr/',note:'주휴수당과 근로기준 안내'},
+  {label:'4대사회보험 정보연계센터',url:'https://www.4insure.or.kr/',note:'사회보험 가입과 보험료 기준 확인'}],
+ 'housing-subscription-plan':[
+  {label:'청약Home',url:'https://www.applyhome.co.kr/',note:'입주자모집공고와 청약 일정 확인'},
+  {label:'위택스',url:'https://www.wetax.go.kr/',note:'취득 관련 지방세 확인'}],
+ 'housing-loan-capacity':[{label:'금융위원회 스트레스 DSR 안내',url:'https://www.fsc.go.kr/no040101?cnId=2741',note:'DSR 정의와 적용 범위 확인'}],
+ 'monthly-budget-plan':[{label:'금융감독원 금융교육센터',url:'https://www.fss.or.kr/edu/',note:'가계 재무관리 교육자료 확인'}],
+ 'jeonse-monthly-rent':[{label:'국토교통부 실거래가 공개시스템',url:'https://rt.molit.go.kr/',note:'지역별 실제 전월세 거래조건 확인'}],
+ 'early-loan-repayment':[{label:'금융감독원 금융소비자정보포털',url:'https://fine.fss.or.kr/',note:'중도상환수수료와 대출 소비자정보 확인'}],
+ 'retirement-leave-pay':[{label:'고용노동부 노동포털 퇴직금 계산',url:'https://1350.moel.go.kr/home/hp/retirementpaycal/retirementpaycal.jsp',note:'평균임금 산정 항목과 공식 계산 비교'}],
+ 'parental-leave-income':[{label:'고용24',url:'https://www.work24.go.kr/',note:'육아휴직 급여의 최신 요건과 신청 절차 확인'}],
+ 'car-ownership-cost':[{label:'자동차365',url:'https://www.car365.go.kr/',note:'자동차 등록·세금·중고차 관련 공공정보 확인'}],
+ 'moving-budget':[{label:'한국부동산원',url:'https://www.reb.or.kr/',note:'부동산 거래와 중개 관련 공공정보 확인'}],
+ 'wage-conversion':[{label:'고용노동부',url:'https://www.moel.go.kr/',note:'근로시간·주휴·임금 기준 확인'}]
+}
 
 export const guides:Guide[]=[
  {slug:'salary-take-home',category:'급여',title:'연봉 실수령액이 사이트마다 다른 이유',summary:'4대 보험, 비과세액, 부양가족 수와 국민연금 상한이 실수령액에 미치는 영향을 설명합니다.',sections:[{title:'실수령액의 구성',paragraphs:['월 실수령액은 세전 월급에서 국민연금, 건강보험, 장기요양보험, 고용보험, 소득세와 지방소득세를 뺀 금액입니다. 연봉을 12로 나눈 값과 실제 월급이 다르거나 상여가 별도라면 표와 급여명세서도 달라집니다.','WonderLife는 선택한 연도의 근로자 부담 요율을 적용하고, 국민연금은 1~6월과 7~12월의 기준소득월액 상한을 구분합니다. 소득세는 국세청 근로소득 간이세액표에서 과세 월급과 부양가족 수를 찾아 계산합니다.']},{title:'정확하게 비교하는 방법',paragraphs:['인터넷 표와 비교할 때는 연도, 상·하반기, 비과세 월액, 부양가족 수가 모두 같은지 먼저 확인해야 합니다. 식대 등 비과세액이 20만원이면 사회보험과 소득세의 계산 기준이 낮아져 비과세 없음 표보다 실수령액이 커집니다.','급여명세서에는 회사의 보험 기준소득 신고액, 원천징수 비율 선택, 상여 처리 등이 반영될 수 있습니다. 따라서 표는 일반적인 월 정기급여의 예상치이며 실제 지급액을 보증하지 않습니다.']}],faq:[{q:'2025년 표와 금액이 다른 가장 흔한 이유는?',a:'비과세액을 0원으로 계산한 표와 20만원으로 계산한 표의 차이가 가장 흔합니다. 부양가족 수와 국민연금 상한 적용 시기도 함께 확인하세요.'},{q:'지방소득세는 어떻게 계산하나요?',a:'일반적인 급여 원천징수에서는 소득세의 10%를 지방소득세로 계산하며 원 단위 처리에 따라 몇 원 차이가 날 수 있습니다.'}]},
@@ -21,3 +51,16 @@ export const guides:Guide[]=[
  {slug:'moving-budget',category:'주거',title:'이사와 입주 준비금 빠짐없이 모으기',summary:'계약·등기·이사·수리·가구·가전 비용을 항목별로 합산합니다.',calculatorPath:'/calculators/moving-cost',sections:[{title:'반환되는 돈과 실제 비용을 분리하기',paragraphs:['새집 보증금은 나중에 반환될 수 있지만 입주일에는 현금이 필요합니다. 기존 보증금 회수액, 새 보증금, 잔금과 대출 실행액을 각각 기록하면 당일 필요한 순현금을 파악할 수 있습니다. 계약금처럼 이미 낸 돈은 전체 계약금액과 중복 합산하지 않도록 주의하세요.','중개보수, 법무·등기, 보증보험, 이사업체, 청소, 수리, 가구·가전은 반환되지 않는 실제 비용입니다. 견적이 아직 없다면 항목을 0원으로 지우기보다 임시 예상값과 확인 예정일을 기록하는 편이 누락을 줄입니다.']},{title:'이사일 기준 현금 계획 만들기',paragraphs:['기존 집 보증금 반환과 새집 잔금 지급 시각이 어긋날 수 있으므로 총액이 맞더라도 단기 자금이 부족할 수 있습니다. 은행 이체한도, 대출 실행 시간, 열쇠 인도 조건과 관리비 정산을 이사 전에 확인하세요.','수리와 가전 배송은 현장 변수로 추가금이 생기기 쉬워 견적 합계에 예비비를 별도로 둡니다. 예를 들어 확정 비용이 1,000만원이고 예비비율을 10%로 정했다면 준비금은 1,100만원입니다. 예비비는 업체 견적을 대신하지 않고 예상 밖 지출을 흡수하는 완충액입니다.']}],faq:[{q:'보증금은 모두 비용인가요?',a:'아닙니다. 반환 가능 자금과 소모성 비용을 분리하고, 입주일에 필요한 현금 계산에는 새 보증금과 기존 보증금 회수 시점을 함께 반영하세요.'},{q:'예비비는 몇 퍼센트가 적당한가요?',a:'정답은 없지만 견적 확정도가 낮거나 수리 범위가 불명확할수록 더 넉넉히 잡아야 합니다. 계산기는 선택한 비율의 금액만 보여줍니다.'}]},
  {slug:'wage-conversion',category:'근로',title:'시급·월급·연봉을 같은 기준으로 환산하는 법',summary:'주 소정근로시간과 주휴시간 포함 여부를 반영해 서로 다른 급여 단위를 비교합니다.',sections:[{title:'유급시간을 먼저 맞추기',paragraphs:['시급을 월급으로 바꾸려면 주 소정근로시간뿐 아니라 일반적인 주휴시간 포함 여부를 먼저 정해야 합니다. 계산기는 주 15시간 이상을 선택하고 주휴시간 포함을 설정한 경우 주 40시간에 비례한 최대 8시간을 더합니다.','주급을 월평균으로 바꿀 때는 1년 365일을 7일과 12개월로 나눈 평균 주 수를 사용합니다. 특정 월의 실제 근무일수와는 차이가 날 수 있습니다.']},{title:'세전 환산과 실수령액 구분',paragraphs:['환산 결과는 계약 급여를 같은 단위로 비교하기 위한 세전 금액입니다. 소득세와 사회보험, 연장·야간·휴일수당은 포함하지 않습니다. 공제 후 금액은 연봉 계산기에서 별도로 확인하세요.']}],faq:[{q:'월 209시간과 왜 조금 다른가요?',a:'209시간은 주 40시간 근로의 통상적인 월 환산 기준이고, 이 계산기는 입력한 주 시간을 연평균 월수로 환산하므로 표시값에 차이가 날 수 있습니다.'},{q:'주휴시간을 항상 포함해야 하나요?',a:'주 15시간 이상과 개근 등 실제 지급요건을 충족하는지 근로계약과 고용노동부 안내를 확인해야 합니다.'}]}
 ]
+
+const calculatorGuidePaths:Record<string,string>={
+ 'loan-repayment':'/calculators/loan-payment',
+ 'date-difference':'/calculators/date-difference',
+ 'unit-conversion':'/calculators/unit-converter',
+ 'travel-expense':'/calculators/travel-expense',
+ 'business-days':'/calculators/business-days',
+ 'savings-interest':'/calculators/savings-interest',
+ 'part-time-insurance':'/calculators/part-time-pay',
+ 'housing-subscription-plan':'/calculators/apartment-subscription-plan',
+ 'wage-conversion':'/calculators/wage-converter'
+}
+for(const guide of guides)guide.calculatorPath??=calculatorGuidePaths[guide.slug]
