@@ -1,5 +1,5 @@
 import {describe,expect,it} from 'vitest'
-import {isIndexedCalculatorPath,renderCalculator,renderGuide} from './index'
+import {isIndexedCalculatorPath,renderCalculator,renderGuide,shouldServeAdsOnPath} from './index'
 
 describe('guide pre-rendering',()=>{
   it('renders substantive guide content into the initial HTML response',()=>{
@@ -24,5 +24,14 @@ describe('guide pre-rendering',()=>{
     expect(renderCalculator('/calculators/random-picker')).toBeNull()
     expect(isIndexedCalculatorPath('/calculators/random-picker')).toBe(false)
     expect(isIndexedCalculatorPath('/calculators/monthly-budget')).toBe(true)
+  })
+
+  it('serves ads only on manually reviewed content pages',()=>{
+    expect(shouldServeAdsOnPath('/guides/monthly-budget-plan')).toBe(true)
+    expect(shouldServeAdsOnPath('/calculators/monthly-budget')).toBe(true)
+    expect(shouldServeAdsOnPath('/calculators/random-picker')).toBe(false)
+    expect(shouldServeAdsOnPath('/privacy')).toBe(false)
+    expect(shouldServeAdsOnPath('/contact')).toBe(false)
+    expect(shouldServeAdsOnPath('/')).toBe(false)
   })
 })

@@ -20,13 +20,13 @@
 
 모든 기능 개발은 [ADSENSE_PRIORITY.md](./ADSENSE_PRIORITY.md)의 승인 우선 원칙과 위험 목록을 먼저 확인하고, 작업 후 해당 문서를 갱신합니다.
 
-`frontend/index.html`의 `<head>`에 공식 AdSense 스크립트와 계정 메타 태그를 두고, `frontend/public/ads.txt`에 승인된 판매자 정보를 게시합니다.
+`frontend/index.html`에는 사이트 소유권 확인용 계정 메타 태그를 두고, `frontend/public/ads.txt`에는 승인된 판매자 정보를 게시합니다. AdSense 스크립트는 Worker가 수동 검토된 핵심 가이드와 계산기 페이지에만 삽입합니다. 개인정보처리방침·문의·탐색 화면과 `noindex` 페이지에는 광고 코드를 넣지 않습니다.
 
 승인 신청 전 체크리스트:
 
 1. 실제 도메인에 HTTPS로 배포하고 모든 계산기·가이드·정책 링크가 로그인 없이 열리는지 확인합니다.
 2. Search Console에서 소유권을 확인하고 실제 도메인을 넣은 `sitemap.xml`을 제출합니다.
-3. AdSense 게시자 ID 발급 후 `frontend/index.html`과 `frontend/public/ads.txt`에 Google이 제공한 값을 추가합니다.
+3. AdSense 게시자 ID 발급 후 `frontend/index.html`의 계정 메타 태그, `frontend/public/ads.txt`, `frontend/worker/index.ts`의 승인된 콘텐츠 페이지용 스크립트에 Google이 제공한 값을 추가합니다.
 4. 계산 가이드를 직접 검토해 서비스 계산식과 맞는지 확인하고, 얇은 자동 생성 Q&A를 대량 게시하지 않습니다.
 5. 모바일 화면, 깨진 링크, 빈 페이지, 공사 중 문구가 없는지 확인한 뒤 사이트 검토를 요청합니다.
 

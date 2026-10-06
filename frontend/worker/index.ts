@@ -9,7 +9,10 @@ interface Env {
 
 const API_PATHS = ['/api/', '/oauth2/', '/login/', '/logout']
 const indexedCalculatorPaths=new Set(guides.flatMap(guide=>guide.calculatorPath?[guide.calculatorPath]:[]))
+const reviewedGuidePaths=new Set(guides.map(guide=>`/guides/${guide.slug}`))
 export const isIndexedCalculatorPath=(path:string)=>indexedCalculatorPaths.has(path)
+export const shouldServeAdsOnPath=(path:string)=>indexedCalculatorPaths.has(path)||reviewedGuidePaths.has(path)
+const ADSENSE_SCRIPT='<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7454918902572923" crossorigin="anonymous"></script>'
 const escapeHtml=(value:string)=>value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]!))
 export const renderGuide=(slug:string)=>{
   const guide=guides.find(item=>item.slug===slug)
@@ -76,6 +79,7 @@ export default {
       const headers=new Headers(response.headers)
       const isThinCalculator=incoming.pathname.startsWith('/calculators/')&&!isIndexedCalculatorPath(incoming.pathname)
       const robots=incoming.pathname.endsWith('/collection-status')||(incoming.pathname.includes('/school/')&&!schoolHasData)||isThinCalculator?'noindex, follow':'index, follow'
+      const serveAds=robots==='index, follow'&&shouldServeAdsOnPath(incoming.pathname)
       headers.set('X-Robots-Tag',robots)
       const html=new Response(response.body,{status:response.status,headers})
       return new HTMLRewriter()
@@ -84,7 +88,7 @@ export default {
         .on('meta[property="og:title"]',{element(element){element.setAttribute('content',`${meta[0]} | WonderLife`)}})
         .on('meta[property="og:description"]',{element(element){element.setAttribute('content',meta[1])}})
         .on('link[rel="canonical"]',{element(element){element.setAttribute('href',incoming.origin+incoming.pathname)}})
-        .on('head',{element(element){element.append(`<meta name="robots" content="${robots}"><link rel="canonical" href="${incoming.origin}${incoming.pathname}">`,{html:true})}})
+        .on('head',{element(element){element.append(`<meta name="robots" content="${robots}"><link rel="canonical" href="${incoming.origin}${incoming.pathname}">${serveAds?ADSENSE_SCRIPT:''}`,{html:true})}})
         .on('#root',{element(element){const initialContent=renderedGuide?.html||renderedCalculator?.html;if(initialContent)element.setInnerContent(initialContent,{html:true})}})
         .on('script[src*="pagead2.googlesyndication.com"]',{element(element){if(robots.startsWith('noindex'))element.remove()}})
         .transform(html)
